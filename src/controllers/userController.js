@@ -275,25 +275,14 @@ const getUserProfile = async function (req, res) {
   try {
     let filters = req.params.userId;
 
-    if (!validator.isValidRequest(userId)) {
+    if (!isValidRequest(filters)) {
       return res.status(400).send({ status: false, message: 'Invalid userId' })
     }
 
-    if (Object.keys(filters).length === 0) { // This block will work to fetch all books incase no filter is provided
-
-      let user = await userModel.find({ isDeleted: false, isPublished: true })
-      if (user.length === 0) res.status(404).send({ status: false, message: "User not found" })
-      res.status(200).send({ status: true, data: user })
-
-    } else {
-
-      // filters.isDeleted = false
-      // filters.isPublic = true
-
-      let filteredUser = await userModel.find(filters)
-      if (filteredUser.length === 0) return res.status(404).send({ status: false, msg: "No such data available" })
+      let filteredUser = await userModel.findById(filters)
+      if (!filteredUser) return res.status(404).send({ status: false, msg: "No such data available" })
       else return res.status(200).send({ status: true, data: filteredUser })
-    }
+    
   } catch (err) {
     return res.status(500).send({ status: false, message: err.message });
   }
