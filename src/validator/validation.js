@@ -8,6 +8,11 @@ const isValidRequest = function (data) {
   return true;
 };
 
+// function for name verification
+const isValidName = function (name) {
+  return /^[a-zA-Z.-]{2,30}$/.test(name);
+};
+
 // function for mobile verification
 const isValidMobile = function (num) {
   return /^[6789]\d{9}$/.test(num);
@@ -58,8 +63,6 @@ let uploadFile = async (file) => {
       if (err) {
         return reject({ error: err });
       }
-      console.log(data);
-      console.log("file uploaded succesfully");
       return resolve(data.Location);
     });
   });
@@ -71,6 +74,7 @@ const generateHash = function (password) {
 
 module.exports = {
   isValidRequest,
+  isValidName,
   isValidMobile,
   isValidMail,
   isValidPassword,
