@@ -72,6 +72,10 @@ const generateHash = function (password) {
   return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
 };
 
+const validPassword = function (password) {
+  return bcrypt.compareSync(password, this.password);
+};
+
 module.exports = {
   isValidRequest,
   isValidName,
@@ -82,4 +86,5 @@ module.exports = {
   isValid,
   uploadFile,
   generateHash,
+  validPassword,
 };
