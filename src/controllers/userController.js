@@ -12,7 +12,7 @@ const {
   generateHash,
   isValidName,
 } = require("../validator/validation");
-const { find } = require("../models/userModel");
+
 
 const registerUser = async function (req, res) {
   try {
@@ -177,15 +177,6 @@ const registerUser = async function (req, res) {
 
 
 
-
-
-
-
-
-
-
-
-
 const loginUser = async function (req, res) {
   try {
 
@@ -244,11 +235,11 @@ const loginUser = async function (req, res) {
         .json({ status: false, msg: `Invalid email or password!` });
     }
 
-    const token = await jwt.sign(
+    const token = jwt.sign(
       {
         userId: findUser._id,
       },
-      "jwtSecretKey", {expiresIn: '150mins'}
+      "jwtSecretKey", { expiresIn: '150mins' }
     );
 
     res.status(200).json({status:true, msg:`Login Successful`, data:{token, userId:findUser._id}});
@@ -260,13 +251,6 @@ const loginUser = async function (req, res) {
     return res.status(500).send({ status: false, message: err.message });
   }
 };
-
-
-
-
-
-
-
 
 
 
