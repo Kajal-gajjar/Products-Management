@@ -1,4 +1,6 @@
 const userModel = require("../models/userModel");
+const bcrypt = require("bcrypt");
+const jwt =require('jsonwebtoken')
 const {
   isValidRequest,
   isValidMail,
@@ -10,6 +12,7 @@ const {
   generateHash,
   isValidName,
 } = require("../validator/validation");
+const { find } = require("../models/userModel");
 
 const registerUser = async function (req, res) {
   try {
@@ -197,7 +200,7 @@ const loginUser = async function (req, res) {
     }
     const { email, password } = requestBody;
    
-    if (!requestBody.email) {
+    if (!email) {
       return res
         .status(400)
         .json({ status: false, msg: `email is mandatory field!` });
@@ -212,7 +215,7 @@ const loginUser = async function (req, res) {
         .status(400)
         .json({ status: false, msg: `Invalid eMail Address!` });
     }
-    if (!requestBody.password) {
+    if (!password) {
       return res
         .status(400)
         .json({ status: false, msg: `password is mandatory field!` });
@@ -229,10 +232,13 @@ const loginUser = async function (req, res) {
       
     });
   
-    const isValidPassword = await bcrypt.compare(req.body.password, findUser.password)
+    const validPassword = function (password) {
+      return bcrypt.compareSync(password, this.password);
+    };
+  
 
 
-    if (!isValidPassword) {
+    if (!findUser.validPassword(req.body.password)) {
       return res
         .status(401)
         .json({ status: false, msg: `Invalid email or password!` });
@@ -242,7 +248,7 @@ const loginUser = async function (req, res) {
       {
         userId: findUser._id,
       },
-      jwtSecretKey, {expiresIn: '150mins'}
+      "jwtSecretKey", {expiresIn: '150mins'}
     );
 
     res.status(200).json({status:true, msg:`Login Successful`, data:{token, userId:findUser._id}});
