@@ -26,7 +26,7 @@ const isValidPincode = function (num) {
 // function for mail verification
 const isValidMail = function (v) {
   v = v.toLowerCase();
-  return /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
+  return /^([0-9a-zA-Z]([-_\\.]*[0-9a-zA-Z]+)*)@([a-z]([-_\\.]*[a-z]+)*)[\\.]([a-z]{2,9})+$/.test(
     v
   );
 };
@@ -72,10 +72,6 @@ const generateHash = function (password) {
   return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
 };
 
-const validPassword = function (password) {
-  return bcrypt.compareSync(password, this.password);
-};
-
 module.exports = {
   isValidRequest,
   isValidName,
@@ -86,5 +82,4 @@ module.exports = {
   isValid,
   uploadFile,
   generateHash,
-  validPassword,
 };
