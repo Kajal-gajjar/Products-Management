@@ -8,6 +8,7 @@ const {
   isValidPincode,
   isValid,
   generateHash,
+  isValidName,
 } = require("../validator/validation");
 
 const registerUser = async function (req, res) {
@@ -18,11 +19,7 @@ const registerUser = async function (req, res) {
         .send({ status: false, message: "Please enter valid Input" });
 
     let { fname, lname, email, phone, password, address } = req.body;
-    let files = req.files;
-
-    console.log(req.body);
-    console.log(typeof fname);
-    console.log(req.files);
+    let profileImage = req.files;
 
     let user = {};
 
@@ -31,7 +28,7 @@ const registerUser = async function (req, res) {
       return res
         .status(400)
         .send({ status: false, message: "First name of user is required" });
-    if (!isValid(fname))
+    if (!isValidName(fname))
       return res
         .status(400)
         .send({ status: false, message: "First name is invalid" });
@@ -42,7 +39,7 @@ const registerUser = async function (req, res) {
       return res
         .status(400)
         .send({ status: false, message: "Last name of user is required" });
-    if (!isValid(lname))
+    if (!isValidName(lname))
       return res
         .status(400)
         .send({ status: false, message: "Last name is invalid" });
@@ -83,20 +80,25 @@ const registerUser = async function (req, res) {
     }
 
     // validation of profile Image
-    // if (!files.length == 0)
-    //   return res
-    //     .status(400)
-    //     .send({ status: false, message: "Profile Image is required" });
-    // if (files && files.length > 0) {
-    //   user.profileImage = await uploadFile(files[0]);
-    // }
+    if (profileImage && profileImage.length == 0)
+      return res
+        .status(400)
+        .send({ status: false, message: "Profile Image is required" });
+    else if (
+      !/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i.test(profileImage[0].originalname)
+    )
+      return res.status(400).send({
+        status: false,
+        message: "Profile Image is required in JPEG/PNG/JPG format",
+      });
+    else user.profileImage = await uploadFile(profileImage[0]);
 
     // validation of password
     if (!password)
       return res
         .status(400)
         .send({ status: false, message: "Password is required" });
-    if (!isValidPassword)
+    if (!isValidPassword(password))
       return res.status(400).send({
         status: false,
         message:
@@ -105,61 +107,59 @@ const registerUser = async function (req, res) {
     // hash the password
     user.password = generateHash(password);
 
-    // if (!isValidRequest(address))
-    //   return res
-    //     .status(400)
-    //     .send({ status: false, message: "Address is required" });
-    // else {
-    //   if (!isValidRequest(address.shipping))
-    //     return res
-    //       .status(400)
-    //       .send({ status: false, message: "Shipping address is required" });
+    // Validation of address
+    if (!isValidRequest(address))
+      return res
+        .status(400)
+        .send({ status: false, message: "Address is required" });
+    else {
+      let { shipping, billing } = address;
+      if (!isValidRequest(shipping))
+        return res
+          .status(400)
+          .send({ status: false, message: "Shipping address is required" });
 
-    //   // shiiping address validation
-    //   let { street, city, pincode } = address.shipping;
-    //   if (!isValid(street))
-    //     return res.status(400).send({
-    //       status: false,
-    //       message: "Shipping address/street is required",
-    //     });
+      // shiiping address validation
 
-    //   if (!isValid(city))
-    //     return res.status(400).send({
-    //       status: false,
-    //       message: "Shipping address/city is required",
-    //     });
+      if (!isValid(shipping.street))
+        return res.status(400).send({
+          status: false,
+          message: "Shipping street is required or invalid",
+        });
 
-    //   if (!isValidPincode(pincode))
-    //     return res.status(400).send({
-    //       status: false,
-    //       message: "Shipping address/pincode is required",
-    //     });
-    //   user.address.shipping = address.shipping;
+      if (!isValidName(shipping.city))
+        return res.status(400).send({
+          status: false,
+          message: "Shipping address/city is required or invalid",
+        });
 
-    //   //  billing address validation
-    //   street = address.billing.street;
-    //   city = address.billing.city;
-    //   pincode = address.billing.pincode;
-    //   if (!isValid(street))
-    //     return res.status(400).send({
-    //       status: false,
-    //       message: "Billing address/street is required",
-    //     });
+      if (!isValidPincode(shipping.pincode))
+        return res.status(400).send({
+          status: false,
+          message: "Shipping address/pincode is required or invalid",
+        });
 
-    //   if (!isValid(city))
-    //     return res.status(400).send({
-    //       status: false,
-    //       message: "Billing address/city is required",
-    //     });
+      //  billing address validation
+      if (!isValid(billing.street))
+        return res.status(400).send({
+          status: false,
+          message: "Billing address/street is required or invalid",
+        });
 
-    //   if (!isValidPincode(pincode))
-    //     return res.status(400).send({
-    //       status: false,
-    //       message: "Billing address/pincode is required",
-    //     });
-    //   user.address.billing = address.billing;
-    // }
-    user.address = address;
+      if (!isValidName(billing.city))
+        return res.status(400).send({
+          status: false,
+          message: "Billing address/city is required or invalid",
+        });
+
+      if (!isValidPincode(billing.pincode))
+        return res.status(400).send({
+          status: false,
+          message: "Billing address/pincode is required or invalid",
+        });
+
+      user.address = address;
+    }
 
     const savedData = await userModel.create(user);
     return res.status(201).send({
@@ -168,7 +168,6 @@ const registerUser = async function (req, res) {
       data: savedData,
     });
   } catch (err) {
-    console.log(err);
     return res.status(500).send({ status: false, message: err.message });
   }
 };
