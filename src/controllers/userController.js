@@ -1,7 +1,4 @@
 const userModel = require("../models/userModel");
-<<<<<<< HEAD
-const validator = require("../validator/validation")
-=======
 const {
   isValidRequest,
   isValidMail,
@@ -12,7 +9,6 @@ const {
   isValid,
   generateHash,
 } = require("../validator/validation");
->>>>>>> 19730c85b5bba15404efd2bf16a43c179edd6560
 
 const registerUser = async function (req, res) {
   try {
@@ -188,7 +184,7 @@ const getUserProfile = async function (req, res) {
   try {
     let filters = req.params.userId;
 
-    if (!validator.isValidObjectId(userId)) {
+    if (!validator.isValidRequest(userId)) {
       return res.status(400).send({ status: false, message: 'Invalid userId' })
     }
 
