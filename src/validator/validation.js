@@ -13,8 +13,6 @@ const validateEmail = (email) => {
       );
       }
 
-
-
       const isValidMobile = function (num) {
         return /^[6789]\d{9}$/.test(num);
       };
@@ -23,5 +21,9 @@ const validateEmail = (email) => {
 const passwordValidate = function(value){
     let regex =    /^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])([a-zA-Z0-9!@#$%^&*]{8,15})$/
     return regex.test(value)
-   }
+   };
+
+   const isValidObjectId = function (objectId) {
+    return mongoose.Types.ObjectId.isValid(objectId);
+  };
       
