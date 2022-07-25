@@ -187,8 +187,67 @@ const registerUser = async function (req, res) {
 const loginUser = async function (req, res) {
   try {
 
-     
+    let requestBody = req.body;
+    if (Object.keys(requestBody).length === 0) {
+      return res
+        .status(400)
+        .json({
+          status: false,
+          msg: `Invalid input. Please enter email and password!`,
+        });
+    }
+    const { email, password } = requestBody;
+   
+    if (!requestBody.email) {
+      return res
+        .status(400)
+        .json({ status: false, msg: `email is mandatory field!` });
+    }
+    if (!isValid(email)) {
+      return res
+        .status(400)
+        .json({ status: false, msg: `email is mandatory field!` });
+    }
+    if (!isValidMail(email)) {
+      return res
+        .status(400)
+        .json({ status: false, msg: `Invalid eMail Address!` });
+    }
+    if (!requestBody.password) {
+      return res
+        .status(400)
+        .json({ status: false, msg: `password is mandatory field!` });
+    }
+
+    if (!isValidPassword(password)) {
+      return res
+        .status(400)
+        .json({ status: false, msg: `password is mandatory field!` });
+    }
+
+    const findUser = await userModel.findOne({
+      email: email,
+      
+    });
   
+    const isValidPassword = await bcrypt.compare(req.body.password, findUser.password)
+
+
+    if (!isValidPassword) {
+      return res
+        .status(401)
+        .json({ status: false, msg: `Invalid email or password!` });
+    }
+
+    const token = await jwt.sign(
+      {
+        userId: findUser._id,
+      },
+      jwtSecretKey, {expiresIn: '150mins'}
+    );
+
+    res.status(200).json({status:true, msg:`Login Successful`, data:{token, userId:findUser._id}});
+
 
 
 
