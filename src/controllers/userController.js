@@ -7,12 +7,39 @@ const registerUser = async function (req, res) {
   }
 };
 
+
+
+
+
+
+
+
+
+
+
+
 const loginUser = async function (req, res) {
   try {
+
+     
+  
+
+
+
   } catch (err) {
     return res.status(500).send({ status: false, message: err.message });
   }
 };
+
+
+
+
+
+
+
+
+
+
 
 const getUserProfile = async function (req, res) {
   try {

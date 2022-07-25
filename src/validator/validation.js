@@ -5,6 +5,12 @@ const isValid = function(value){
     return true;
 }
 
+
+
+const isValidRequestBody = function (value) {
+  return Object.keys(value).length > 0
+}
+
 const validateEmail = (email) => {
     return String(email)
       .toLowerCase()
