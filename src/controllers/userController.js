@@ -279,29 +279,25 @@ const getUserProfile = async function (req, res) {
   }
 };
 
-// // ------------------------------------------Update User Profile API------------------------------------------
+// ------------------------------------------Update User Profile API------------------------------------------
 const UpdateUser = async function (req, res) {
   try {
-    let userId = req.params.userId;
+    let userId = req.user._id;
 
-    if (!isValidObjectId(userId)) {
-      return res.status(400).send({ status: false, message: "Invalid userId" });
-    }
-
-    let users = await findById(userId);
-
-    if (Object.keys(users).length === 0) {
+    if (Object.keys(req.body).length === 0) {
       return res
         .status(404)
         .send({ status: false, message: "No such data found" });
     }
 
-    let userData = req.body;
+    let { fname, lname, email, phone, password, address } = req.body;
+    let profileImage = req.files;
 
-    if (Object.keys(userData).length === 0) {
-      return res
-        .status(404)
-        .send({ status: false, message: "No data to update" });
+    if (fname) {
+      if (!isValidName(fname))
+        return res
+          .status(400)
+          .send({ status: false, message: "Invalid first Name" });
     }
 
     let updatedUser = await userModel.findOneAndUpdate(
