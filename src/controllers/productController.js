@@ -1,5 +1,5 @@
 const productModel = require('../models/productModel');
-const aws = require('../aws/s3Upload');
+const aws = require('aws-sdk');
 const {
    uploadFile,
     isValid,
@@ -7,11 +7,11 @@ const {
   } = require("../validator/validation");
 
 
-const createProduct = function async (res,res){
+const createProduct = async function  (res,res){
 
 try{
-    let requestBody =req.body;
-    let profileImage =req.files;
+    let requestBody = req.body;
+    let profileImage = req.files;
     const {title, description, price, availableSizes,isFreeShipping, style, installments, deletedAt, isDeleted} = requestBody;
 
     if(!requestBody.title){

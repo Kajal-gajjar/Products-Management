@@ -22,7 +22,8 @@ router.put(
 
 /*-------------------------------------FEATTURE II API --------------------------*/
 
-router.post("products");
+router.post("/products");
+router.get("/products")
 
 // validating the route
 router.all("/*", function (req, res) {
