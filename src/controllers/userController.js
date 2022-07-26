@@ -279,6 +279,7 @@ const getUserProfile = async function (req, res) {
 };
 
 // ------------------------------------------Update User Profile API------------------------------------------
+
 const UpdateUser = async function (req, res) {
   try {
     let userId = req.user._id;
