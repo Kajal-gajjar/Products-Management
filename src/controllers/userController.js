@@ -1,6 +1,7 @@
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
+const { isValidObjectId } = require("mongoose");
 const userModel = require("../models/userModel");
-const bcrypt = require("bcrypt");
-const jwt =require('jsonwebtoken')
 const {
   isValidRequest,
   isValidMail,
@@ -12,11 +13,11 @@ const {
   generateHash,
   isValidName,
 } = require("../validator/validation");
-const { find } = require("../models/userModel");
 
+// ------------------------------------------Register User API------------------------------------------
 const registerUser = async function (req, res) {
   try {
-    if (!isValidRequest(req.body))
+    if (!isValidRequest(req.body) || req.files.length == 0)
       return res
         .status(400)
         .send({ status: false, message: "Please enter valid Input" });
@@ -63,7 +64,7 @@ const registerUser = async function (req, res) {
       return res
         .status(400)
         .send({ status: false, message: "Phone number is required" });
-    if (!isValidMobile)
+    if (!isValidMobile(phone))
       return res
         .status(400)
         .send({ status: false, message: "Phone number is invalid" });
@@ -92,7 +93,7 @@ const registerUser = async function (req, res) {
     )
       return res.status(400).send({
         status: false,
-        message: "Profile Image is required in JPEG/PNG/JPG format",
+        message: "Profile Image is required as an Image format",
       });
     else user.profileImage = await uploadFile(profileImage[0]);
 
@@ -116,7 +117,9 @@ const registerUser = async function (req, res) {
         .status(400)
         .send({ status: false, message: "Address is required" });
     else {
+      address = JSON.parse(address);
       let { shipping, billing } = address;
+
       if (!isValidRequest(shipping))
         return res
           .status(400)
@@ -171,56 +174,37 @@ const registerUser = async function (req, res) {
       data: savedData,
     });
   } catch (err) {
+    console.log(err);
     return res.status(500).send({ status: false, message: err.message });
   }
 };
 
-
-
-
-
-
-
-
-
-
-
-
+// ------------------------------------------Login User API------------------------------------------
 const loginUser = async function (req, res) {
   try {
-
-    let requestBody = req.body;
-    if (Object.keys(requestBody).length === 0) {
-      return res
-        .status(400)
-        .json({
-          status: false,
-          msg: `Invalid input. Please enter email and password!`,
-        });
+    if (!isValidRequest(req.body)) {
+      return res.status(400).json({
+        status: false,
+        msg: `Invalid input. Please enter email and password!`,
+      });
     }
-    const { email, password } = requestBody;
-   
+    const { email, password } = req.body;
+
     if (!email) {
       return res
         .status(400)
         .json({ status: false, msg: `email is mandatory field!` });
-    }
-    if (!isValid(email)) {
-      return res
-        .status(400)
-        .json({ status: false, msg: `email is mandatory field!` });
-    }
-    if (!isValidMail(email)) {
-      return res
-        .status(400)
-        .json({ status: false, msg: `Invalid eMail Address!` });
     }
     if (!password) {
       return res
         .status(400)
         .json({ status: false, msg: `password is mandatory field!` });
     }
-
+    if (!isValidMail(email)) {
+      return res
+        .status(400)
+        .json({ status: false, msg: `Invalid eMail Address!` });
+    }
     if (!isValidPassword(password)) {
       return res
         .status(400)
@@ -229,90 +213,99 @@ const loginUser = async function (req, res) {
 
     const findUser = await userModel.findOne({
       email: email,
-      
     });
-  
-    const validPassword = function (password) {
-      return bcrypt.compareSync(password, this.password);
-    };
-  
 
+    if (!findUser)
+      return res
+        .status(404)
+        .send({ status: false, message: "User is not found" });
 
     if (!findUser.validPassword(req.body.password)) {
       return res
         .status(401)
-        .json({ status: false, msg: `Invalid email or password!` });
+        .json({ status: false, msg: "Password is incorrect" });
     }
 
     const token = await jwt.sign(
       {
         userId: findUser._id,
       },
-      "jwtSecretKey", {expiresIn: '150mins'}
+      "project5-group47",
+      { expiresIn: "150mins" }
     );
 
-    res.status(200).json({status:true, msg:`Login Successful`, data:{token, userId:findUser._id}});
-
-
-
-
+    res.status(200).json({
+      status: true,
+      message: `Login Successful`,
+      data: { token: token, userId: findUser._id },
+    });
   } catch (err) {
     return res.status(500).send({ status: false, message: err.message });
   }
 };
 
-
-
-
-
-
-
-
-
-
-
+// ------------------------------------------Get User Profile API------------------------------------------
 const getUserProfile = async function (req, res) {
   try {
     let filters = req.params.userId;
+    if (!filters)
+      return res
+        .status(400)
+        .send({ status: false, message: "Please enter user ID in params" });
 
-    if (!isValidRequest(filters)) {
-      return res.status(400).send({ status: false, message: 'Invalid userId' })
-    }
+    if (!isValidObjectId(filters))
+      return res.status(400).send({ status: false, message: "Invalid userId" });
 
-      let filteredUser = await userModel.findById(filters)
-      if (!filteredUser) return res.status(404).send({ status: false, msg: "No such data available" })
-      else return res.status(200).send({ status: true, data: filteredUser })
-    
+    let filteredUser = await userModel.findById(filters);
+    if (!filteredUser)
+      return res
+        .status(404)
+        .send({ status: false, msg: "No such data available" });
+
+    if (filters !== req.token.userId)
+      return res.status(401).send({
+        status: false,
+        message:
+          "You are not authorized to fetch the profile from mentioned userID",
+      });
+
+    return res.status(200).send({
+      status: true,
+      message: "User profile details",
+      data: filteredUser,
+    });
   } catch (err) {
     return res.status(500).send({ status: false, message: err.message });
   }
 };
 
+// ------------------------------------------Update User Profile API------------------------------------------
 const UpdateUser = async function (req, res) {
   try {
-    let userId = req.params.userId;
+    let userId = req.user._id;
 
-    if (!validator.isValidObjectId(userId)) {
-      return res.status(400).send({ status: false, message: 'Invalid userId' })
+    if (Object.keys(req.body).length === 0) {
+      return res
+        .status(404)
+        .send({ status: false, message: "No such data found" });
     }
 
-    let users = await findById(userId);
+    let { fname, lname, email, phone, password, address } = req.body;
+    let profileImage = req.files;
 
-    if (Object.keys(users).length === 0) {
-      return res.status(404).send({ status: false, message: 'No such data found' });
+    if (fname) {
+      if (!isValidName(fname))
+        return res
+          .status(400)
+          .send({ status: false, message: "Invalid first Name" });
     }
 
-    let userData = req.body;
-
-    if (Object.keys(userData).length === 0) {
-      return res.status(404).send({ status: false, message: 'No data to update' });
-    }
-
-    let updatedUser = await userModel.findOneAndUpdate({ _id: userId }, userData, { new: true });
-    res.status(200).send({ status: updatedUser })
-
-
-
+    let updatedUser = await userModel.findOneAndUpdate(
+      { _id: userId },
+      userData,
+      { new: true }
+    );
+    res.status(200).send({ status: updatedUser });
   } catch (err) {
     return res.status(500).send({ status: false, message: err.message });
   }
