@@ -63,6 +63,23 @@ try{
 
 }
 
+exports.getProducts = async (req, res) => {
+
+    let filters = req.query;
+  
+    Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
+  
+    if (Object.keys(filters).length === 0) {
+  
+      let products = await productModel.findOne({ isDeleted: false })
+      if (products.length === 0)
+        res.status(404).send({ status: false, message: 'Product not found' })
+      res.status(200).send({ status: true, data: products })
+    }
+  
+  
+  }
+
 
 module.exports = { createProduct};
 
