@@ -1,6 +1,6 @@
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { default: mongoose } = require("mongoose");
+const mongoose = require("mongoose");
+const { isValidObjectId } = require("mongoose");
 const userModel = require("../models/userModel");
 const {
   isValidRequest,
@@ -64,7 +64,7 @@ const registerUser = async function (req, res) {
       return res
         .status(400)
         .send({ status: false, message: "Phone number is required" });
-    if (!isValidMobile)
+    if (!isValidMobile(phone))
       return res
         .status(400)
         .send({ status: false, message: "Phone number is invalid" });
@@ -93,7 +93,7 @@ const registerUser = async function (req, res) {
     )
       return res.status(400).send({
         status: false,
-        message: "Profile Image is required in JPEG/PNG/JPG format",
+        message: "Profile Image is required as an Image format",
       });
     else user.profileImage = await uploadFile(profileImage[0]);
 
@@ -119,6 +119,7 @@ const registerUser = async function (req, res) {
     else {
       address = JSON.parse(address);
       let { shipping, billing } = address;
+
       if (!isValidRequest(shipping))
         return res
           .status(400)
@@ -219,9 +220,6 @@ const loginUser = async function (req, res) {
         .status(404)
         .send({ status: false, message: "User is not found" });
 
-    const validPassword = function (password) {
-      return bcrypt.compareSync(password, this.password);
-    };
     if (!findUser.validPassword(req.body.password)) {
       return res
         .status(401)
@@ -238,7 +236,7 @@ const loginUser = async function (req, res) {
 
     res.status(200).json({
       status: true,
-      msg: `Login Successful`,
+      message: `Login Successful`,
       data: { token: token, userId: findUser._id },
     });
   } catch (err) {
@@ -250,17 +248,32 @@ const loginUser = async function (req, res) {
 const getUserProfile = async function (req, res) {
   try {
     let filters = req.params.userId;
+    if (!filters)
+      return res
+        .status(400)
+        .send({ status: false, message: "Please enter user ID in params" });
 
-    if (!mongoose.Schema.Types.isValid(filters)) {
+    if (!isValidObjectId(filters))
       return res.status(400).send({ status: false, message: "Invalid userId" });
-    }
 
     let filteredUser = await userModel.findById(filters);
     if (!filteredUser)
       return res
         .status(404)
         .send({ status: false, msg: "No such data available" });
-    return res.status(200).send({ status: true, data: filteredUser });
+
+    if (filters !== req.token.userId)
+      return res.status(401).send({
+        status: false,
+        message:
+          "You are not authorized to fetch the profile from mentioned userID",
+      });
+
+    return res.status(200).send({
+      status: true,
+      message: "User profile details",
+      data: filteredUser,
+    });
   } catch (err) {
     return res.status(500).send({ status: false, message: err.message });
   }
@@ -271,7 +284,7 @@ const UpdateUser = async function (req, res) {
   try {
     let userId = req.params.userId;
 
-    if (!validator.isValidObjectId(userId)) {
+    if (!isValidObjectId(userId)) {
       return res.status(400).send({ status: false, message: "Invalid userId" });
     }
 
