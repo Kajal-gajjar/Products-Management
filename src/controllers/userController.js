@@ -285,8 +285,8 @@ const UpdateUser = async function (req, res) {
 
     if (!isValidRequest(req.body) && req.files.length == 0) {
       return res
-        .status(404)
-        .send({ status: false, message: "No such data found" });
+        .status(400)
+        .send({ status: false, message: "Please enter valid Input" });
     }
 
     // creating deep copy of request body as [object: null-prototype]
