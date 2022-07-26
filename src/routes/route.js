@@ -5,18 +5,22 @@ const {
   getUserProfile,
   UpdateUser,
 } = require("../controllers/userController");
+const{}=require("../controllers/productController")
 const { userAuthentication, authorization } = require("../middleware/auth");
 const router = express.Router();
 
-// user API
+/*-------------------------------------FEATTURE I API --------------------------*/
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/user/:userId/profile", userAuthentication, getUserProfile);
-router.put(
-  "/user/:userId/profile",
-  userAuthentication,
-  authorization,
-  UpdateUser
-);
+router.put("/user/:userId/profile",userAuthentication,authorization,UpdateUser);
+
+
+
+/*-------------------------------------FEATTURE II API --------------------------*/
+
+router.post('products',)
+
+
 
 module.exports = router;
