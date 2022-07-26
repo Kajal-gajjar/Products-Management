@@ -127,7 +127,6 @@ const registerUser = async function (req, res) {
           .send({ status: false, message: "Shipping address is required" });
 
       // shiiping address validation
-
       if (!isValid(shipping.street))
         return res.status(400).send({
           status: false,
@@ -285,29 +284,169 @@ const UpdateUser = async function (req, res) {
   try {
     let userId = req.user._id;
 
-    if (Object.keys(req.body).length === 0) {
+    if (!isValidRequest(req.body) && req.files.length == 0) {
       return res
-        .status(404)
-        .send({ status: false, message: "No such data found" });
+        .status(400)
+        .send({ status: false, message: "Please enter valid Input" });
     }
 
-    let { fname, lname, email, phone, password, address } = req.body;
+    // creating deep copy of request body as [object: null-prototype]
+    const requestBody = JSON.parse(JSON.stringify(req.body));
+    let { fname, lname, email, phone, password, address } = requestBody;
     let profileImage = req.files;
+    let user = {};
 
-    if (fname) {
+    if (requestBody.hasOwnProperty("fname")) {
       if (!isValidName(fname))
         return res
           .status(400)
           .send({ status: false, message: "Invalid first Name" });
+      user.fname = fname;
     }
 
-    let updatedUser = await userModel.findOneAndUpdate(
-      { _id: userId },
-      userData,
-      { new: true }
-    );
-    res.status(200).send({ status: updatedUser });
+    if (requestBody.hasOwnProperty("lname")) {
+      if (!isValidName(lname))
+        return res
+          .status(400)
+          .send({ status: false, message: "Invalid Last Name" });
+      user.lname = lname;
+    }
+
+    // validation of email
+    if (requestBody.hasOwnProperty("email")) {
+      if (!isValidMail(email))
+        return res
+          .status(400)
+          .send({ status: false, message: "Email is invalid" });
+      const findUser = await userModel.findOne({ email: email });
+      if (findUser)
+        return res.status(409).send({
+          status: false,
+          message: "Entered mail Id is already in use",
+        });
+      user.email = email;
+    }
+
+    // validation of phone number
+    if (requestBody.hasOwnProperty("phone")) {
+      if (!isValidMail(phone))
+        return res
+          .status(400)
+          .send({ status: false, message: "phone is invalid" });
+      const findUser = await userModel.findOne({ phone: phone });
+      if (findUser)
+        return res.status(409).send({
+          status: false,
+          message: "Entered Phone number is already in use",
+        });
+      user.phone = phone;
+    }
+
+    // checking for password
+    if (requestBody.hasOwnProperty("password")) {
+      if (!isValidPassword(password))
+        return res.status(400).send({
+          status: false,
+          message:
+            "Password should contain 8 to 15 characters, one special character, a number and should not contain space ",
+        });
+      // hash the password
+      user.password = generateHash(password);
+    }
+
+    // validation of profile Image
+    if (profileImage && profileImage.length !== 0) {
+      if (
+        !/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i.test(profileImage[0].originalname)
+      )
+        return res.status(400).send({
+          status: false,
+          message: "Profile Image is required as an Image format",
+        });
+      user.profileImage = await uploadFile(profileImage[0]);
+    }
+
+    if (requestBody.hasOwnProperty("address")) {
+      const { shipping, billing } = address;
+
+      if (address.hasOwnProperty("shipping")) {
+        const { street, city, pincode } = shipping;
+
+        if (shipping.hasOwnProperty("street")) {
+          if (!isValid(street))
+            return res.status(400).send({
+              status: false,
+              message:
+                "shipping address: street name should be in valid format ",
+            });
+          user["address.shipping.street"] = street.trim();
+        }
+
+        if (shipping.hasOwnProperty("city")) {
+          if (!isValidName(city))
+            return res.status(400).send({
+              status: false,
+              message: "shipping address: city name should be in valid format ",
+            });
+          user["address.shipping.city"] = city.trim();
+        }
+
+        if (shipping.hasOwnProperty("pincode")) {
+          if (!isValidPincode(pincode))
+            return res.status(400).send({
+              status: false,
+              message:
+                "Shipping address: pin code should be valid like: 335659 ",
+            });
+          user["address.shipping.pincode"] = pincode.trim();
+        }
+
+        if (address.hasOwnProperty("billing")) {
+          const { street, city, pincode } = billing;
+
+          if (billing.hasOwnProperty("street")) {
+            if (!isValid(street))
+              return res.status(400).send({
+                status: false,
+                message:
+                  "billing address: street name should be in valid format ",
+              });
+            user["address.billing.street"] = street.trim();
+          }
+
+          if (billing.hasOwnProperty("city")) {
+            if (!isValidName(city))
+              return res.status(400).send({
+                status: false,
+                message:
+                  "billing address: city name should be in valid format ",
+              });
+            user["address.billing.city"] = city.trim();
+          }
+
+          if (billing.hasOwnProperty("pincode")) {
+            if (!isValidPincode(pincode))
+              return res.status(400).send({
+                status: false,
+                message:
+                  "Billing address: pin code should be valid like: 335659 ",
+              });
+            user["address.billing.pincode"] = pincode.trim();
+          }
+        }
+      }
+    }
+
+    let updatedUser = await userModel.findOneAndUpdate({ _id: userId }, user, {
+      new: true,
+    });
+    res.status(200).send({
+      status: true,
+      message: "User profile updated",
+      data: updatedUser,
+    });
   } catch (err) {
+    console.log(err);
     return res.status(500).send({ status: false, message: err.message });
   }
 };

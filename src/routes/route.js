@@ -5,7 +5,7 @@ const {
   getUserProfile,
   UpdateUser,
 } = require("../controllers/userController");
-const{}=require("../controllers/productController")
+const {} = require("../controllers/productController");
 const { userAuthentication, authorization } = require("../middleware/auth");
 const router = express.Router();
 
@@ -13,14 +13,20 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/user/:userId/profile", userAuthentication, getUserProfile);
-router.put("/user/:userId/profile",userAuthentication,authorization,UpdateUser);
-
-
+router.put(
+  "/user/:userId/profile",
+  userAuthentication,
+  authorization,
+  UpdateUser
+);
 
 /*-------------------------------------FEATTURE II API --------------------------*/
 
-router.post('products',)
+router.post("products");
 
-
+// validating the route
+router.all("/*", function (req, res) {
+  res.status(400).send({ status: false, message: "invalid http request" });
+});
 
 module.exports = router;
