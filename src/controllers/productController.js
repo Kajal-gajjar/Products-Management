@@ -198,30 +198,35 @@ const getProducts = async (req, res) => {
   }
 };
 
+//-----------------------------------------------Get product by ID-----------------------------------------------
 const getProducstById = async (req, res) => {
+  let id = req.params.productId;
 
-  let id = req.params.productId
-
-  if(!isValidObjectId(id)) {
-    return res.status(404).send({ status: false, message: "Please provide a valid productd id"})
+  if (!isValidObjectId(id)) {
+    return res
+      .status(404)
+      .send({ status: false, message: "Please provide a valid productd id" });
   }
 
-  let findProductId = await productModel.findById({_id: id})
+  let findProductId = await productModel.findById(id).select({ deletedAt: 0 });
 
-  if(!findProductId){
-      return res.status(404).send({status:false, message:"No product is available with desired id"})
+  if (!findProductId) {
+    return res.status(404).send({
+      status: false,
+      message: "No product is available with desired id",
+    });
   }
 
-  let isDeleted = await productModel.findOne({_id: id, isDeleted: true})
-
-  if(isDeleted){
-    return res.status(404).send({status:false, message: "Product already deleted"})
-  }
-
-  let allProducts = await productModel.findOne({_id: id, isDeleted: false}).select({deletedAt: 0})
-  return res.status(200).send({status: true, message: "Product found successfully", data: allProducts})
-
-
+  if (findProductId.isDeleted == true)
+    return res
+      .status(404)
+      .send({ status: false, message: "Product already deleted" });
+  else
+    return res.status(200).send({
+      status: true,
+      message: "Product found successfully",
+      data: findProductId,
+    });
 };
 
 //-----------------------------------------------Delete product by productID-----------------------------------------------
@@ -253,4 +258,9 @@ const deleteProductById = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProducstById, deleteProductById, };
+module.exports = {
+  createProduct,
+  getProducts,
+  getProducstById,
+  deleteProductById,
+};
