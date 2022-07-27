@@ -7,6 +7,7 @@ const {
   isValidRequest,
 } = require("../validator/validation");
 
+//-----------------------------------------------Create Product-----------------------------------------------
 const createProduct = async function (req, res) {
   try {
     if (!isValidRequest(req.body) || req.files.length == 0)
@@ -148,6 +149,52 @@ const createProduct = async function (req, res) {
   }
 };
 
+//-----------------------------------------------Get product-----------------------------------------------
+const getProducts = async (req, res) => {
+  try {
+    let data = req.query;
+    let filters = {};
+
+    // Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
+
+    if (data.name != undefined) {
+      filters.title = data.name;
+    }
+
+    if (data.size != undefined) {
+      filters.availableSizes = data.size.toUpperCase();
+    }
+
+    if (data.priceGreaterThan != undefined) {
+      filters.price = { $gt: data.priceGreaterThan };
+    }
+
+    if (data.priceLessThan != undefined) {
+      filters.price = { $lt: data.priceLessThan };
+    }
+
+    filters.isDeleted = false;
+
+    const productData = await productModel
+      .find(filters)
+      .sort({ price: 1 })
+      .select({ deletedAt: 0 });
+
+    if (productData.length === 0) {
+      return res
+        .status(404)
+        .send({ status: false, message: "Product not found" });
+    }
+
+    return res
+      .status(200)
+      .send({ status: true, message: "success", data: productData });
+  } catch (error) {
+    return res.status(500).send({ status: false, error: error.message });
+  }
+};
+
+//-----------------------------------------------Delete product by productID-----------------------------------------------
 const deleteProductById = async (req, res) => {
   try {
     let productId = req.params.productId;
@@ -176,4 +223,4 @@ const deleteProductById = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, deleteProductById };
+module.exports = { createProduct, getProducts, deleteProductById };

@@ -7,6 +7,10 @@ const {
 } = require("../controllers/userController");
 const {
   createProduct,
+  getProducts,
+} = require("../controllers/productController");
+const {
+  createProduct,
   deleteProductById,
 } = require("../controllers/productController");
 const { userAuthentication, authorization } = require("../middleware/auth");
@@ -26,6 +30,7 @@ router.put(
 /*-------------------------------------Product API --------------------------*/
 
 router.post("/products", createProduct);
+router.get("/products", getProducts);
 router.delete("/products/:productId", deleteProductById);
 
 // validating the route
