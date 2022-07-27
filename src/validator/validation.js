@@ -75,12 +75,18 @@ let uploadFile = async (file) => {
 const generateHash = function (password) {
   return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
 };
-const isValidNumber = function(value){
-  if(isNaN(value)) return false;
+const isValidNumber = function (value) {
+  if (isNaN(value)) return false;
   return true;
+};
+
+function isJsonString(jsonData) {
+  if (typeof jsonData == "string") {
+    if (!/^[\[|\{](\s|.*|\w)*[\]|\}]$/.test(jsonData)) {
+      return jsonData;
+    }
+  }
 }
-
-
 
 module.exports = {
   isValidRequest,
@@ -93,4 +99,8 @@ module.exports = {
   uploadFile,
   generateHash,
   isValidNumber,
+<<<<<<< HEAD
+=======
+  isJsonString,
+>>>>>>> b361743d567c003401255e6d5c61a1215b8e855f
 };
