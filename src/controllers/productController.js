@@ -1,5 +1,5 @@
 const productModel = require("../models/productModel");
-const aws = require("../aws/s3Upload");
+const aws = require("aws-sdk");
 
 const createProduct = function async(res, res) {
   try {
