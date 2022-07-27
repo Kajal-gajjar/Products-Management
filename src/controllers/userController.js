@@ -231,7 +231,7 @@ const loginUser = async function (req, res) {
         userId: findUser._id,
       },
       "project5-group47",
-      { expiresIn: "150mins" }
+      { expiresIn: "1500mins" }
     );
 
     res.status(200).json({
@@ -245,6 +245,8 @@ const loginUser = async function (req, res) {
 };
 
 // ------------------------------------------Get User Profile API------------------------------------------
+
+
 const getUserProfile = async function (req, res) {
   try {
     let filters = req.params.userId;
@@ -280,6 +282,8 @@ const getUserProfile = async function (req, res) {
 };
 
 // ------------------------------------------Update User Profile API------------------------------------------
+
+
 const UpdateUser = async function (req, res) {
   try {
     let userId = req.user._id;
