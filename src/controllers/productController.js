@@ -126,6 +126,8 @@ const getProducts = async (req, res) => {
     let data = req.query
     let filters = {}
 
+    console.log(filters)
+
     // Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
 
     if (data.name != undefined) {
