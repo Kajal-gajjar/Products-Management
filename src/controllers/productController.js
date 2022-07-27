@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-const productModel = require('../models/productModel');
-const aws = require('aws-sdk');
-=======
 const productModel = require("../models/productModel");
->>>>>>> d46c6103c635fb1e3eab9b8bc4b9292e495fd92b
 const {
   uploadFile,
   isValid,
@@ -18,14 +13,6 @@ const createProduct = async function (req, res) {
         .status(400)
         .send({ status: false, message: "Please enter valid input" });
 
-<<<<<<< HEAD
-const createProduct = async function  (res,res){
-
-try{
-    let requestBody = req.body;
-    let profileImage = req.files;
-    const {title, description, price, availableSizes,isFreeShipping, style, installments, deletedAt, isDeleted} = requestBody;
-=======
     let productImage = req.files;
     let {
       title,
@@ -38,7 +25,6 @@ try{
     } = req.body;
 
     let product = {};
->>>>>>> d46c6103c635fb1e3eab9b8bc4b9292e495fd92b
 
     product.currencyId = "INR";
     product.currencyFormat = "₹";
@@ -164,54 +150,7 @@ const deleteProductById = async (req, res) => {
     } catch (error) {
       res.status(500).json({ status: false, error: error.message });
     }
-<<<<<<< HEAD
-    if (profileImage && profileImage.length == 0)
-    return res
-      .status(400)
-      .send({ status: false, message: "Profile Image is required" });
-  else if (
-    !/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i.test(profileImage[0].originalname)
-  )
-    return res.status(400).send({
-      status: false,
-      message: "Profile Image is required as an Image format",
-    });
-  else user.profileImage = await uploadFile(profileImage[0]);
-
-  let finalData = {title, description, price, isFreeShipping, productImage, style, availableSizes, installments ,deletedAt, isDeleted};      
-        const userData = await productModel.create(finalData);
-        res.status(201).json({status:true, data:userData});
-
-}catch(error){
-    res.status(500).json({status:false, error:error.message});
-}
-
-}
-
-exports.getProducts = async (req, res) => {
-
-    let filters = req.query;
-  
-    Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
-  
-    if (Object.keys(filters).length === 0) {
-  
-      let products = await productModel.findOne({ isDeleted: false })
-      if (products.length === 0)
-        res.status(404).send({ status: false, message: 'Product not found' })
-      res.status(200).send({ status: true, data: products })
-    }
-  
-  
-  }
-
-
-module.exports = { createProduct};
-
-
-=======
   };
->>>>>>> d46c6103c635fb1e3eab9b8bc4b9292e495fd92b
 
 
 
