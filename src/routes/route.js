@@ -5,11 +5,11 @@ const {
   getUserProfile,
   UpdateUser,
 } = require("../controllers/userController");
-const {} = require("../controllers/productController");
+const { createProduct } = require("../controllers/productController");
 const { userAuthentication, authorization } = require("../middleware/auth");
 const router = express.Router();
 
-/*-------------------------------------FEATTURE I API --------------------------*/
+/*-------------------------------------User API --------------------------*/
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/user/:userId/profile", userAuthentication, getUserProfile);
@@ -20,9 +20,9 @@ router.put(
   UpdateUser
 );
 
-/*-------------------------------------FEATTURE II API --------------------------*/
+/*-------------------------------------Product API --------------------------*/
 
-router.post("products");
+router.post("/products", createProduct);
 
 // validating the route
 router.all("/*", function (req, res) {
