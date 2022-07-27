@@ -8,11 +8,9 @@ const {
 const {
   createProduct,
   getProducts,
-} = require("../controllers/productController");
-const {
-  createProduct,
   deleteProductById,
 } = require("../controllers/productController");
+
 const { userAuthentication, authorization } = require("../middleware/auth");
 const router = express.Router();
 
