@@ -161,7 +161,6 @@ const deleteProductById = async (req, res) => {
       { _id: productId, isDeleted: false },
       { isDeleted: true, deletedAt: Date.now() }
     );
-
     if (!checkID) {
       return res
         .status(404)
