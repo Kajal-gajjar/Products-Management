@@ -283,7 +283,10 @@ const getUserProfile = async function (req, res) {
 
 // ------------------------------------------Update User Profile API------------------------------------------
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> d46c6103c635fb1e3eab9b8bc4b9292e495fd92b
 const UpdateUser = async function (req, res) {
   try {
     let userId = req.user._id;
@@ -333,7 +336,7 @@ const UpdateUser = async function (req, res) {
 
     // validation of phone number
     if (requestBody.hasOwnProperty("phone")) {
-      if (!isValidMail(phone))
+      if (!isValidMobile(phone))
         return res
           .status(400)
           .send({ status: false, message: "phone is invalid" });
@@ -409,12 +412,13 @@ const UpdateUser = async function (req, res) {
           const { street, city, pincode } = billing;
 
           if (billing.hasOwnProperty("street")) {
-            if (!isValid(street))
+            if (!isValid(street)) {
               return res.status(400).send({
                 status: false,
                 message:
                   "billing address: street name should be in valid format ",
               });
+            }
             user["address.billing.street"] = street.trim();
           }
 
