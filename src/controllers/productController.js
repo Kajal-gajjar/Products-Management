@@ -113,40 +113,80 @@ const createProduct = async function (req, res) {
     const userData = await productModel.create(product);
     res.status(201).json({ status: true, data: userData });
   } catch (error) {
-    console.log(err);
+    // console.log(error);
     res.status(500).json({ status: false, error: error.message });
   }
 };
 
+const getProducts = async (req, res) => {
+
+  try {
+
+    let data = req.query
+    let filters = {}
+
+    // Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
+
+    if (data.name != undefined) {
+      filters.title = data.name
+    }
+
+    if (data.size != undefined) {
+      filters.availableSizes = data.size.toUpperCase()
+    }
+
+    if (data.priceGreaterThan != undefined) {
+      filters.price = { $gt: data.priceGreaterThan };
+    }
+
+    if (data.priceLessThan != undefined) {
+      filters.price = { $lt: data.priceLessThan }
+    }
+
+    filters.isDeleted = false;
+
+    const productData = await productModel.find(filters).sort({ price: 1 }).select({ deletedAt: 0 })
+
+    if (productData.length === 0) {
+      return res.status(404).send({ status: false, message: "Product not found" })
+    }
+
+    return res.status(200).send({ status: true, message: "success", data: productData })
+
+  } catch (error) {
+    return res.status(500).send({ status: false, error: error.message })
+  }
+
+};
 
 
-const deleteProductById = async (req, res) => {
+  const deleteProductById = async (req, res) => {
     try {
       let { productId: _id } = req.params;
-    
-      
+
+
       const checkID = await productModel.findById(_id);
-  
+
       if (!checkID) {
         return res
           .status(404)
           .json({ status: false, msg: `${_id} is not present in DB!` });
-        }
-  
+      }
+
       const idAlreadyDeleted = await productModel.findOne({ _id: _id });
       if (idAlreadyDeleted.isDeleted === true) {
         return res
           .status(400)
           .json({ status: false, msg: `Product already deleted!` });
-        }
-  
-       const productData = await productModel.findByIdAndUpdate(
+      }
+
+      const productData = await productModel.findByIdAndUpdate(
         { _id },
         { isDeleted: true },
         { new: true }
       );
-  
-      res.status(200).json({ status: true, data: productData});
+
+      res.status(200).json({ status: true, data: productData });
     } catch (error) {
       res.status(500).json({ status: false, error: error.message });
     }
@@ -157,4 +197,4 @@ const deleteProductById = async (req, res) => {
 
 
 
-module.exports = { createProduct,deleteProductById};
+  module.exports = { createProduct, getProducts, deleteProductById };

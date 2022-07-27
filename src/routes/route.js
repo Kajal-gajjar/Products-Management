@@ -5,7 +5,7 @@ const {
   getUserProfile,
   UpdateUser,
 } = require("../controllers/userController");
-const { createProduct } = require("../controllers/productController");
+const { createProduct, getProducts } = require("../controllers/productController");
 const { userAuthentication, authorization } = require("../middleware/auth");
 const router = express.Router();
 
@@ -22,12 +22,10 @@ router.put(
 
 /*-------------------------------------Product API --------------------------*/
 
-<<<<<<< HEAD
-router.post("/products");
-router.get("/products")
-=======
 router.post("/products", createProduct);
->>>>>>> d46c6103c635fb1e3eab9b8bc4b9292e495fd92b
+
+router.get("/products", getProducts)
+
 
 // validating the route
 router.all("/*", function (req, res) {
