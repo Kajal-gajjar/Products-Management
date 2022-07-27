@@ -1,4 +1,5 @@
 const productModel = require("../models/productModel");
+const { isValidObjectId } = require("mongoose");
 const {
   uploadFile,
   isValid,
@@ -118,43 +119,33 @@ const createProduct = async function (req, res) {
   }
 };
 
-
-
 const deleteProductById = async (req, res) => {
-    try {
-      let { productId: _id } = req.params;
-    
-      
-      const checkID = await productModel.findById(_id);
-  
-      if (!checkID) {
-        return res
-          .status(404)
-          .json({ status: false, msg: `${_id} is not present in DB!` });
-        }
-  
-      const idAlreadyDeleted = await productModel.findOne({ _id: _id });
-      if (idAlreadyDeleted.isDeleted === true) {
-        return res
-          .status(400)
-          .json({ status: false, msg: `Product already deleted!` });
-        }
-  
-       const productData = await productModel.findByIdAndUpdate(
-        { _id },
-        { isDeleted: true },
-        { new: true }
-      );
-  
-      res.status(200).json({ status: true, data: productData});
-    } catch (error) {
-      res.status(500).json({ status: false, error: error.message });
+  try {
+    let productId = req.params.productId;
+
+    if (!isValidObjectId(productId))
+      return res
+        .status(400)
+        .send({ status: false, message: "Invalid product ID" });
+
+    const checkID = await productModel.findOneAndUpdate(
+      { _id: productId, isDeleted: false },
+      { isDeleted: true, deletedAt: Date.now() }
+    );
+
+    if (!checkID) {
+      return res
+        .status(404)
+        .json({ status: false, msg: `${productId} is not present in DB!` });
     }
-  };
 
+    res.status(200).json({
+      status: true,
+      message: "Request product is deleted sucessfully",
+    });
+  } catch (error) {
+    res.status(500).json({ status: false, error: error.message });
+  }
+};
 
-
-
-
-
-module.exports = { createProduct,deleteProductById};
+module.exports = { createProduct, deleteProductById };
