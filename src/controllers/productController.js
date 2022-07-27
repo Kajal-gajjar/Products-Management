@@ -111,11 +111,40 @@ const createProduct = async function (req, res) {
       product.installments = installments;
     }
 
+    // validation of availableSizes
+    try {
+      availableSizes = JSON.parse(availableSizes);
+    } catch (err) {
+      return res.status(400).send({
+        status: false,
+        message: `Please enter at least one valid size from ["S", "XS", "M", "X", "L", "XXL", "XL"] in array format`,
+      });
+    }
+    if (!availableSizes.length)
+      return res
+        .status(400)
+        .send({ status: false, message: "At least one size is required" });
+    if (!Array.isArray(availableSizes))
+      return res.status(400).send({
+        status: false,
+        message: "enter valid available sizes in array",
+      });
+
+    let sizes = availableSizes.filter(
+      (size) =>
+        isValid(size) && ["S", "XS", "M", "X", "L", "XXL", "XL"].includes(size)
+    );
+    if (sizes.length == 0)
+      return res.status(400).send({
+        status: false,
+        message: `available sizes should be in valid format and should be from:  S, XS, M, X, L, XXL, XL`,
+      });
+    product.availableSizes = sizes;
+
     const userData = await productModel.create(product);
     res.status(201).json({ status: true, data: userData });
   } catch (error) {
-    console.log(err);
-    res.status(500).json({ status: false, error: error.message });
+    return res.status(500).json({ status: false, error: error.message });
   }
 };
 
@@ -144,7 +173,7 @@ const deleteProductById = async (req, res) => {
       message: "Request product is deleted sucessfully",
     });
   } catch (error) {
-    res.status(500).json({ status: false, error: error.message });
+    return res.status(500).json({ status: false, error: error.message });
   }
 };
 
