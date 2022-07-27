@@ -99,8 +99,5 @@ module.exports = {
   uploadFile,
   generateHash,
   isValidNumber,
-<<<<<<< HEAD
-=======
   isJsonString,
->>>>>>> b361743d567c003401255e6d5c61a1215b8e855f
 };
