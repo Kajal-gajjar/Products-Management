@@ -8,6 +8,7 @@ const {
 const {
   createProduct,
   getProducts,
+  getProducstById,
   deleteProductById,
 } = require("../controllers/productController");
 
@@ -29,6 +30,7 @@ router.put(
 
 router.post("/products", createProduct);
 router.get("/products", getProducts);
+router.get("/products/:productId", getProducstById)
 router.delete("/products/:productId", deleteProductById);
 
 // validating the route
