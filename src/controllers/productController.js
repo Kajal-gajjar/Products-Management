@@ -157,31 +157,87 @@ const getProducts = async (req, res) => {
     let data = req.query;
     let filters = {};
 
-    console.log(filters);
-
-    // Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
-
-    if (data.name != undefined) {
-      filters.title = data.name;
-    }
-
+    // size validation
     if (data.size != undefined) {
-      filters.availableSizes = data.size.toUpperCase();
+
+      let size = data.size.split(",");
+      
+      if (size.length == 0)
+        return res
+          .status(400)
+          .send({ status: false, message: "Please enter valid size" });
+
+      size = size.map((x) => x.trim());
+      const validSize = size.forEach((x) => {
+        if (!["S", "XS", "M", "X", "L", "XXL", "XL"].includes(x)) return false;
+      });
+
+      if (validSize == false)
+        return res
+          .status(400)
+          .send({ status: false, msg: "Please enter valid size" });
+      else filters.availableSizes = { $in: size };
     }
 
-    if (data.priceGreaterThan != undefined) {
-      filters.price = { $gt: data.priceGreaterThan };
+    // name validation
+    if (data.name != undefined) {
+      let name = data.name.trim();
+      if (!isValid(name))
+        return res
+          .status(400)
+          .send({ status: false, message: "Please enter valid title" });
+      filters.title = new RegExp(name, "i");
     }
 
-    if (data.priceLessThan != undefined) {
-      filters.price = { $lt: data.priceLessThan };
+    // price validations
+    if (data.priceGreaterThan != undefined && data.priceLessThan != undefined) {
+      let priceGreaterThan = data.priceGreaterThan.trim();
+      let priceLessThan = data.priceLessThan.trim();
+      if (!isValidNumber(priceLessThan) || !isValidNumber(priceGreaterThan))
+        return res.status(400).send({
+          status: false,
+          message: "Please enter valid Price",
+        });
+      filters.price = { $gte: priceGreaterThan, $lte: priceLessThan };
+    } else {
+      if (data.priceGreaterThan != undefined) {
+        let priceGreaterThan = data.priceGreaterThan.trim();
+        if (!isValidNumber(priceGreaterThan))
+          return res.status(400).send({
+            status: false,
+            message: "Please enter valid Greater than Price",
+          });
+        filters.price = { $gt: data.priceGreaterThan };
+      }
+
+      if (data.priceLessThan != undefined) {
+        let priceLessThan = data.priceLessThan.trim();
+        if (!isValidNumber(priceLessThan))
+          return res.status(400).send({
+            status: false,
+            message: "Please enter valid Less than Price",
+          });
+        filters.price = { $lt: data.priceLessThan };
+      }
     }
+
+    let sortPrice = {};
+    if (data.priceSort != undefined) {
+      if (data.priceSort != 1 && data.priceSort != -1)
+        return res.status(400).send({
+          status: false,
+          message:
+            "Please enter priceSort = 1 for ascending and priceSort = -1 for descending",
+        });
+      else if (data.priceSort == -1) sortPrice = { price: -1 };
+      else sortPrice = { price: 1 };
+    } else sortPrice = { price: 1 };
 
     filters.isDeleted = false;
 
     const productData = await productModel
       .find(filters)
-      .sort({ price: 1 })
+      .sort(sortPrice)
       .select({ deletedAt: 0 });
 
     if (productData.length === 0) {
@@ -194,34 +250,75 @@ const getProducts = async (req, res) => {
       .status(200)
       .send({ status: true, message: "success", data: productData });
   } catch (error) {
+    console.log(error);
     return res.status(500).send({ status: false, error: error.message });
   }
 };
 
-const getProducstById = async (req, res) => {
+//-----------------------------------------------Get product by ID-----------------------------------------------
 
-  let id = req.params.productId
 
-  if(!isValidObjectId(id)) {
-    return res.status(404).send({ status: false, message: "Please provide a valid productd id"})
+const getProducstById = async function (req, res) {
+  try {
+    let productId = req.params.productId;
+
+    if (!isValidObjectId(productId))
+      return res
+        .status(400)
+        .send({ status: false, message: "Invalid Product ID" });
+
+    let getProduct = await productModel.findById(productId);
+
+    if (!getProduct)
+      return res.status(404).send({
+        status: false,
+        message: "Product for the mentioned ProductID is not found ",
+      });
+
+    if (getProduct.isDeleted == true)
+      return res
+        .status(400)
+        .send({ status: false, message: "Product is deleted" });
+
+    return res
+      .status(200)
+      .send({ status: true, message: "Product found", data: getProduct });
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
   }
+};
 
-  let findProductId = await productModel.findById({_id: id})
-
-  if(!findProductId){
-      return res.status(404).send({status:false, message:"No product is available with desired id"})
-  }
-
-  let isDeleted = await productModel.findOne({_id: id, isDeleted: true})
-
-  if(isDeleted){
-    return res.status(404).send({status:false, message: "Product already deleted"})
-  }
-
-  let allProducts = await productModel.findOne({_id: id, isDeleted: false}).select({deletedAt: 0})
-  return res.status(200).send({status: true, message: "Product found successfully", data: allProducts})
-
-
+//------------------------------------------------Update Product------------------------------------------------
+const updateProductbyId = async function (res, req) {
+  // try{
+  //   const { product: _id} =req.params;
+  //   const {title,description,price,availableSizes} =req.body;
+  //   const checkID = await productModel.findById(_id);
+  //    if (!checkID) {
+  //         return res.status(404).json({ status: false, msg: `${_id} is not present in DB!` });
+  //         }
+  //       const idAlreadyDeleted =await productModel.findOne({_id : _id});
+  //       if (idAlreadyDeleted.isDeleted === true) {
+  //         return res.status(400).json({ status: false, msg: `Product already deleted!` });
+  //         }
+  //         cost (isTitleAlreadyUsed) = await productModel.findonw({ title:title});
+  //         if (isTitleAlreadyUsed){
+  //           return res.status(400).send({status:false, message :`${title} already exists!`});
+  //         }
+  //         if(!isValid(title)){
+  //           return res.status(400).json({status:false, message: `Please input valid Title!`});
+  //       }
+  //       if(!isValid(price)){
+  //         return res.status(400).json({status:false, message: `Please input valid Description!`});
+  //     }
+  //     if(!isValid(description)){
+  //       return res.status(400).json({status:false, message: `Please input valid Description!`});
+  //   }
+  //     const newData = await productModel.findByIdAndUpdate({_id},req.body,{new:true});
+  //     res.status(201).json({staus:true,message:`Updated Succesfully`,data :newData});
+  // }catch(error){
+  //   res.status(500).json({status :false,error:error.message});
+  // }
 };
 
 //-----------------------------------------------Delete product by productID-----------------------------------------------
@@ -253,4 +350,10 @@ const deleteProductById = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProducstById, deleteProductById, };
+module.exports = {
+  createProduct,
+  getProducts,
+  getProducstById,
+  deleteProductById,
+  updateProductbyId,
+};

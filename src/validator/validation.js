@@ -8,9 +8,19 @@ const isValidRequest = function (data) {
   return true;
 };
 
+const isValidValues = function (data) {
+  if (!data) return false;
+  if (Object.values(data).length == 0) return false;
+  if (Object.values(data).length > 0) {
+    const checkData = Object.values(data).filter((value) => value);
+    if (checkData.length == 0) return false;
+  }
+  return true;
+};
+
 const isValidObjectId = (objectId) => {
   return mongoose.Types.ObjectId.isValid(objectId);
-}
+};
 
 // function for name verification
 const isValidName = function (name) {
@@ -100,4 +110,5 @@ module.exports = {
   generateHash,
   isValidNumber,
   isJsonString,
+  isValidValues,
 };

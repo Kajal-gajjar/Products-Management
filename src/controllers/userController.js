@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
 const { isValidObjectId } = require("mongoose");
 const userModel = require("../models/userModel");
 
@@ -13,6 +12,8 @@ const {
   isValid,
   generateHash,
   isValidName,
+  isValidValues,
+  isJsonString,
 } = require("../validator/validation");
 
 // ------------------------------------------Register User API------------------------------------------
@@ -118,50 +119,57 @@ const registerUser = async function (req, res) {
         .status(400)
         .send({ status: false, message: "Address is required" });
     else {
+      if (isJsonString(address))
+        return res.status(400).send({
+          status: false,
+          message: "Please enter valid Address as an Object",
+        });
+
       address = JSON.parse(address);
       let { shipping, billing } = address;
 
       if (!isValidRequest(shipping))
-        return res
-          .status(400)
-          .send({ status: false, message: "Shipping address is required" });
+        return res.status(400).send({
+          status: false,
+          message: "Valid Shipping address is required",
+        });
 
       // shiiping address validation
       if (!isValid(shipping.street))
         return res.status(400).send({
           status: false,
-          message: "Shipping street is required or invalid",
+          message: "Shipping address: street is required or invalid",
         });
 
       if (!isValidName(shipping.city))
         return res.status(400).send({
           status: false,
-          message: "Shipping address/city is required or invalid",
+          message: "Shipping address: city is required or invalid",
         });
 
       if (!isValidPincode(shipping.pincode))
         return res.status(400).send({
           status: false,
-          message: "Shipping address/pincode is required or invalid",
+          message: "Shipping address: pincode is required or invalid",
         });
 
       //  billing address validation
       if (!isValid(billing.street))
         return res.status(400).send({
           status: false,
-          message: "Billing address/street is required or invalid",
+          message: "Billing address: street is required or invalid",
         });
 
       if (!isValidName(billing.city))
         return res.status(400).send({
           status: false,
-          message: "Billing address/city is required or invalid",
+          message: "Billing address: city is required or invalid",
         });
 
       if (!isValidPincode(billing.pincode))
         return res.status(400).send({
           status: false,
-          message: "Billing address/pincode is required or invalid",
+          message: "Billing address: pincode is required or invalid",
         });
 
       user.address = address;
@@ -246,7 +254,6 @@ const loginUser = async function (req, res) {
 
 // ------------------------------------------Get User Profile API------------------------------------------
 
-
 const getUserProfile = async function (req, res) {
   try {
     let filters = req.params.userId;
@@ -286,18 +293,19 @@ const getUserProfile = async function (req, res) {
 const UpdateUser = async function (req, res) {
   try {
     let userId = req.user._id;
+    let profileImage = req.files;
+    const requestBody = JSON.parse(JSON.stringify(req.body));
+    let { fname, lname, email, phone, password, address } = requestBody;
+    let user = {};
 
-    if (!isValidRequest(req.body) && req.files.length == 0) {
+    if (
+      !isValidValues(requestBody) &&
+      (profileImage === undefined || profileImage?.length === 0)
+    ) {
       return res
         .status(400)
         .send({ status: false, message: "Please enter valid Input" });
     }
-
-    // creating deep copy of request body as [object: null-prototype]
-    const requestBody = JSON.parse(JSON.stringify(req.body));
-    let { fname, lname, email, phone, password, address } = requestBody;
-    let profileImage = req.files;
-    let user = {};
 
     if (requestBody.hasOwnProperty("fname")) {
       if (!isValidName(fname))
@@ -351,7 +359,7 @@ const UpdateUser = async function (req, res) {
         return res.status(400).send({
           status: false,
           message:
-            "Password should contain 8 to 15 characters, one special character, a number and should not contain space ",
+            "Password should contain 8 to 15 characters, one special character, a number and should not contain space",
         });
       // hash the password
       user.password = generateHash(password);
@@ -370,7 +378,7 @@ const UpdateUser = async function (req, res) {
     }
 
     if (requestBody.hasOwnProperty("address")) {
-      const { shipping, billing } = address;
+      const { shipping, billing } = JSON.parse(JSON.stringify(address));
 
       if (address.hasOwnProperty("shipping")) {
         const { street, city, pincode } = shipping;
@@ -380,7 +388,7 @@ const UpdateUser = async function (req, res) {
             return res.status(400).send({
               status: false,
               message:
-                "shipping address: street name should be in valid format ",
+                "shipping address: street name should be in valid format",
             });
           user["address.shipping.street"] = street.trim();
         }
@@ -389,7 +397,7 @@ const UpdateUser = async function (req, res) {
           if (!isValidName(city))
             return res.status(400).send({
               status: false,
-              message: "shipping address: city name should be in valid format ",
+              message: "shipping address: city name should be in valid format",
             });
           user["address.shipping.city"] = city.trim();
         }
@@ -398,47 +406,49 @@ const UpdateUser = async function (req, res) {
           if (!isValidPincode(pincode))
             return res.status(400).send({
               status: false,
-              message:
-                "Shipping address: pin code should be valid like: 335659 ",
+              message: "Shipping address: pin code should be valid",
             });
           user["address.shipping.pincode"] = pincode.trim();
         }
+      }
 
-        if (address.hasOwnProperty("billing")) {
-          const { street, city, pincode } = billing;
+      if (Object.keys(address).includes("billing")) {
+        const { street, city, pincode } = JSON.parse(JSON.stringify(billing));
 
-          if (billing.hasOwnProperty("street")) {
-            if (!isValid(street)) {
-              return res.status(400).send({
-                status: false,
-                message:
-                  "billing address: street name should be in valid format ",
-              });
-            }
-            user["address.billing.street"] = street.trim();
+        if (billing.hasOwnProperty("street")) {
+          if (!isValid(street)) {
+            return res.status(400).send({
+              status: false,
+              message: "billing address: street name should be in valid format",
+            });
           }
+          user["address.billing.street"] = street.trim();
+        }
 
-          if (billing.hasOwnProperty("city")) {
-            if (!isValidName(city))
-              return res.status(400).send({
-                status: false,
-                message:
-                  "billing address: city name should be in valid format ",
-              });
-            user["address.billing.city"] = city.trim();
-          }
+        if (billing.hasOwnProperty("city")) {
+          if (!isValidName(city))
+            return res.status(400).send({
+              status: false,
+              message: "billing address: city name should be in valid format",
+            });
+          user["address.billing.city"] = city.trim();
+        }
 
-          if (billing.hasOwnProperty("pincode")) {
-            if (!isValidPincode(pincode))
-              return res.status(400).send({
-                status: false,
-                message:
-                  "Billing address: pin code should be valid like: 335659 ",
-              });
-            user["address.billing.pincode"] = pincode.trim();
-          }
+        if (billing.hasOwnProperty("pincode")) {
+          if (!isValidPincode(pincode))
+            return res.status(400).send({
+              status: false,
+              message: "Billing address: pin code should be valid",
+            });
+          user["address.billing.pincode"] = pincode.trim();
         }
       }
+    }
+
+    if (user.length == 0) {
+      return res
+        .status(400)
+        .send({ status: false, message: "Please provide valid input" });
     }
 
     let updatedUser = await userModel.findOneAndUpdate({ _id: userId }, user, {
