@@ -7,8 +7,6 @@ const {
   isValidRequest,
   isJsonString,
 } = require("../validator/validation");
-const { serialize } = require("v8");
-const { filter } = require("minimatch");
 
 //-----------------------------------------------Create Product-----------------------------------------------
 const createProduct = async function (req, res) {
@@ -255,67 +253,69 @@ const getProducts = async (req, res) => {
   }
 };
 
-const updateProductbyId = function async (res,req){
- 
-try{
-  const { product: _id} =req.params;
-  const {title,description,price,availableSizes} =req.body;
+//-----------------------------------------------Get product by ID-----------------------------------------------
+const getProducstById = async function (req, res) {
+  try {
+    let productId = req.params.productId;
 
-  const checkID = await productModel.findById(_id);
+    if (!isValidObjectId(productId))
+      return res
+        .status(400)
+        .send({ status: false, message: "Invalid Product ID" });
 
-   if (!checkID) {
-        return res.status(404).json({ status: false, msg: `${_id} is not present in DB!` });
-        }
-        
-      const idAlreadyDeleted =await productModel.findOne({_id : _id});
+    let getProduct = await productModel.findById(productId);
 
-      if (idAlreadyDeleted.isDeleted === true) {
-        return res.status(400).json({ status: false, msg: `Product already deleted!` });
-        }
+    if (!getProduct)
+      return res.status(404).send({
+        status: false,
+        message: "Product for the mentioned ProductID is not found ",
+      });
 
-        cost (isTitleAlreadyUsed) = await productModel.findonw({ title:title});
+    if (getProduct.isDeleted == true)
+      return res
+        .status(400)
+        .send({ status: false, message: "Product is deleted" });
 
-        if (isTitleAlreadyUsed){
-          return res.status(400).send({status:false, message :`${title} already exists!`});
-
-
-        }
-        if(!isValid(title)){
-          return res.status(400).json({status:false, message: `Please input valid Title!`});
-      }
-      if(!isValid(price)){
-        return res.status(400).json({status:false, message: `Please input valid Description!`});
-    }
-
-    if(!isValid(description)){
-      return res.status(400).json({status:false, message: `Please input valid Description!`});
+    return res
+      .status(200)
+      .send({ status: true, message: "Product found", data: getProduct });
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
   }
+};
 
-    const newData = await productModel.findByIdAndUpdate({_id},req.body,{new:true});
-    res.status(201).json({staus:true,message:`Updated Succesfully`,data :newData});
-
-
-}catch(error){
-  res.status(500).json({status :false,error:error.message});
-}
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//------------------------------------------------Update Product------------------------------------------------
+const updateProductbyId = async function (res, req) {
+  // try{
+  //   const { product: _id} =req.params;
+  //   const {title,description,price,availableSizes} =req.body;
+  //   const checkID = await productModel.findById(_id);
+  //    if (!checkID) {
+  //         return res.status(404).json({ status: false, msg: `${_id} is not present in DB!` });
+  //         }
+  //       const idAlreadyDeleted =await productModel.findOne({_id : _id});
+  //       if (idAlreadyDeleted.isDeleted === true) {
+  //         return res.status(400).json({ status: false, msg: `Product already deleted!` });
+  //         }
+  //         cost (isTitleAlreadyUsed) = await productModel.findonw({ title:title});
+  //         if (isTitleAlreadyUsed){
+  //           return res.status(400).send({status:false, message :`${title} already exists!`});
+  //         }
+  //         if(!isValid(title)){
+  //           return res.status(400).json({status:false, message: `Please input valid Title!`});
+  //       }
+  //       if(!isValid(price)){
+  //         return res.status(400).json({status:false, message: `Please input valid Description!`});
+  //     }
+  //     if(!isValid(description)){
+  //       return res.status(400).json({status:false, message: `Please input valid Description!`});
+  //   }
+  //     const newData = await productModel.findByIdAndUpdate({_id},req.body,{new:true});
+  //     res.status(201).json({staus:true,message:`Updated Succesfully`,data :newData});
+  // }catch(error){
+  //   res.status(500).json({status :false,error:error.message});
+  // }
+};
 
 //-----------------------------------------------Delete product by productID-----------------------------------------------
 const deleteProductById = async (req, res) => {
