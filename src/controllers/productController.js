@@ -241,25 +241,7 @@ try{
 }catch(error){
   res.status(500).json({status :false,error:error.message});
 }
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //-----------------------------------------------Delete product by productID-----------------------------------------------
 const deleteProductById = async (req, res) => {
   try {
