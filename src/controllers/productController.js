@@ -196,6 +196,68 @@ const getProducts = async (req, res) => {
   }
 };
 
+const updateProductbyId = function async (res,req){
+ 
+try{
+  const { product: _id} =req.params;
+  const {title,description,price,availableSizes} =req.body;
+
+  const checkID = await productModel.findById(_id);
+
+   if (!checkID) {
+        return res.status(404).json({ status: false, msg: `${_id} is not present in DB!` });
+        }
+        
+      const idAlreadyDeleted =await productModel.findOne({_id : _id});
+
+      if (idAlreadyDeleted.isDeleted === true) {
+        return res.status(400).json({ status: false, msg: `Product already deleted!` });
+        }
+
+        cost (isTitleAlreadyUsed) = await productModel.findonw({ title:title});
+
+        if (isTitleAlreadyUsed){
+          return res.status(400).send({status:false, message :`${title} already exists!`});
+
+
+        }
+        if(!isValid(title)){
+          return res.status(400).json({status:false, message: `Please input valid Title!`});
+      }
+      if(!isValid(price)){
+        return res.status(400).json({status:false, message: `Please input valid Description!`});
+    }
+
+    if(!isValid(description)){
+      return res.status(400).json({status:false, message: `Please input valid Description!`});
+  }
+
+    const newData = await productModel.findByIdAndUpdate({_id},req.body,{new:true});
+    res.status(201).json({staus:true,message:`Updated Succesfully`,data :newData});
+
+
+}catch(error){
+  res.status(500).json({status :false,error:error.message});
+}
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //-----------------------------------------------Delete product by productID-----------------------------------------------
 const deleteProductById = async (req, res) => {
   try {
