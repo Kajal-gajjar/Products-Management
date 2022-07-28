@@ -10,6 +10,7 @@ const {
   getProducts,
   getProducstById,
   deleteProductById,
+  updateProductbyId,
 } = require("../controllers/productController");
 
 const { userAuthentication, authorization } = require("../middleware/auth");
@@ -31,6 +32,7 @@ router.put(
 router.post("/products", createProduct);
 router.get("/products", getProducts);
 router.get("/products/:productId", getProducstById);
+router.put("/products/:productId", updateProductbyId);
 router.delete("/products/:productId", deleteProductById);
 
 // validating the route
