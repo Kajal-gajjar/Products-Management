@@ -5,6 +5,7 @@ const {
   isValid,
   isValidNumber,
   isValidRequest,
+  isJsonString,
 } = require("../validator/validation");
 
 //-----------------------------------------------Create Product-----------------------------------------------
@@ -113,18 +114,19 @@ const createProduct = async function (req, res) {
     }
 
     // validation of availableSizes
-    try {
-      availableSizes = JSON.parse(availableSizes);
-    } catch (err) {
-      return res.status(400).send({
-        status: false,
-        message: `Please enter at least one valid size from ["S", "XS", "M", "X", "L", "XXL", "XL"] in array format`,
-      });
-    }
-    if (!availableSizes.length)
+    if (!availableSizes)
       return res
         .status(400)
         .send({ status: false, message: "At least one size is required" });
+
+    if (!isValid(availableSizes) || isJsonString(availableSizes))
+      return res.status(400).send({
+        status: false,
+        message: "Please enter valid availableSizes in array",
+      });
+
+    availableSizes = JSON.parse(availableSizes);
+
     if (!Array.isArray(availableSizes))
       return res.status(400).send({
         status: false,
@@ -155,7 +157,7 @@ const getProducts = async (req, res) => {
     let data = req.query;
     let filters = {};
 
-    console.log(filters)
+    console.log(filters);
 
     // Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
 
@@ -287,4 +289,10 @@ const deleteProductById = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, deleteProductById };
+module.exports = {
+  createProduct,
+  getProducts,
+  getProducstById,
+  deleteProductById,
+  updateProductbyId,
+};

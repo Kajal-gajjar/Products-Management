@@ -8,6 +8,20 @@ const isValidRequest = function (data) {
   return true;
 };
 
+const isValidValues = function (data) {
+  if (!data) return false;
+  if (Object.values(data).length == 0) return false;
+  if (Object.values(data).length > 0) {
+    const checkData = Object.values(data).filter((value) => value);
+    if (checkData.length == 0) return false;
+  }
+  return true;
+};
+
+const isValidObjectId = (objectId) => {
+  return mongoose.Types.ObjectId.isValid(objectId);
+};
+
 // function for name verification
 const isValidName = function (name) {
   return /^[a-zA-Z.-]{2,30}$/.test(name);
@@ -71,12 +85,18 @@ let uploadFile = async (file) => {
 const generateHash = function (password) {
   return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
 };
-const isValidNumber = function(value){
-  if(isNaN(value)) return false;
+const isValidNumber = function (value) {
+  if (isNaN(value)) return false;
   return true;
+};
+
+function isJsonString(jsonData) {
+  if (typeof jsonData == "string") {
+    if (!/^[\[|\{](\s|.*|\w)*[\]|\}]$/.test(jsonData)) {
+      return jsonData;
+    }
+  }
 }
-
-
 
 module.exports = {
   isValidRequest,
@@ -88,5 +108,7 @@ module.exports = {
   isValid,
   uploadFile,
   generateHash,
-  isValidNumber
+  isValidNumber,
+  isJsonString,
+  isValidValues,
 };
