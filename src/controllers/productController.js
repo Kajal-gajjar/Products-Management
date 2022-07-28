@@ -7,6 +7,8 @@ const {
   isValidRequest,
   isJsonString,
 } = require("../validator/validation");
+const { serialize } = require("v8");
+const { filter } = require("minimatch");
 
 //-----------------------------------------------Create Product-----------------------------------------------
 const createProduct = async function (req, res) {
@@ -157,31 +159,85 @@ const getProducts = async (req, res) => {
     let data = req.query;
     let filters = {};
 
-    console.log(filters);
-
-    // Object.keys(filters).forEach(x => filters[x] = filters[x].trim())
-
-    if (data.name != undefined) {
-      filters.title = data.name;
-    }
-
+    // size validation
     if (data.size != undefined) {
-      filters.availableSizes = data.size.toUpperCase();
+      let size = data.size.split(",");
+      if (size.length == 0)
+        return res
+          .status(400)
+          .send({ status: false, message: "Please enter valid size" });
+
+      size = size.map((x) => x.trim());
+      const validSize = size.forEach((x) => {
+        if (!["S", "XS", "M", "X", "L", "XXL", "XL"].includes(x)) return false;
+      });
+
+      if (validSize == false)
+        return res
+          .status(400)
+          .send({ status: false, msg: "Please enter valid size" });
+      else filters.availableSizes = { $in: size };
     }
 
-    if (data.priceGreaterThan != undefined) {
-      filters.price = { $gt: data.priceGreaterThan };
+    // name validation
+    if (data.name != undefined) {
+      let name = data.name.trim();
+      if (!isValid(name))
+        return res
+          .status(400)
+          .send({ status: false, message: "Please enter valid title" });
+      filters.title = new RegExp(name, "i");
     }
 
-    if (data.priceLessThan != undefined) {
-      filters.price = { $lt: data.priceLessThan };
+    // price validations
+    if (data.priceGreaterThan != undefined && data.priceLessThan != undefined) {
+      let priceGreaterThan = data.priceGreaterThan.trim();
+      let priceLessThan = data.priceLessThan.trim();
+      if (!isValidNumber(priceLessThan) || !isValidNumber(priceGreaterThan))
+        return res.status(400).send({
+          status: false,
+          message: "Please enter valid Price",
+        });
+      filters.price = { $gte: priceGreaterThan, $lte: priceLessThan };
+    } else {
+      if (data.priceGreaterThan != undefined) {
+        let priceGreaterThan = data.priceGreaterThan.trim();
+        if (!isValidNumber(priceGreaterThan))
+          return res.status(400).send({
+            status: false,
+            message: "Please enter valid Greater than Price",
+          });
+        filters.price = { $gt: data.priceGreaterThan };
+      }
+
+      if (data.priceLessThan != undefined) {
+        let priceLessThan = data.priceLessThan.trim();
+        if (!isValidNumber(priceLessThan))
+          return res.status(400).send({
+            status: false,
+            message: "Please enter valid Less than Price",
+          });
+        filters.price = { $lt: data.priceLessThan };
+      }
     }
+
+    let sortPrice = {};
+    if (data.priceSort != undefined) {
+      if (data.priceSort != 1 && data.priceSort != -1)
+        return res.status(400).send({
+          status: false,
+          message:
+            "Please enter priceSort = 1 for ascending and priceSort = -1 for descending",
+        });
+      else if (data.priceSort == -1) sortPrice = { price: -1 };
+      else sortPrice = { price: 1 };
+    } else sortPrice = { price: 1 };
 
     filters.isDeleted = false;
 
     const productData = await productModel
       .find(filters)
-      .sort({ price: 1 })
+      .sort(sortPrice)
       .select({ deletedAt: 0 });
 
     if (productData.length === 0) {
@@ -194,6 +250,7 @@ const getProducts = async (req, res) => {
       .status(200)
       .send({ status: true, message: "success", data: productData });
   } catch (error) {
+    console.log(error);
     return res.status(500).send({ status: false, error: error.message });
   }
 };

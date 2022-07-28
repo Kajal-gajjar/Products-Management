@@ -13,6 +13,7 @@ const {
   generateHash,
   isValidName,
   isValidValues,
+  isJsonString,
 } = require("../validator/validation");
 
 // ------------------------------------------Register User API------------------------------------------
@@ -118,50 +119,57 @@ const registerUser = async function (req, res) {
         .status(400)
         .send({ status: false, message: "Address is required" });
     else {
+      if (isJsonString(address))
+        return res.status(400).send({
+          status: false,
+          message: "Please enter valid Address as an Object",
+        });
+
       address = JSON.parse(address);
       let { shipping, billing } = address;
 
       if (!isValidRequest(shipping))
-        return res
-          .status(400)
-          .send({ status: false, message: "Shipping address is required" });
+        return res.status(400).send({
+          status: false,
+          message: "Valid Shipping address is required",
+        });
 
       // shiiping address validation
       if (!isValid(shipping.street))
         return res.status(400).send({
           status: false,
-          message: "Shipping street is required or invalid",
+          message: "Shipping address: street is required or invalid",
         });
 
       if (!isValidName(shipping.city))
         return res.status(400).send({
           status: false,
-          message: "Shipping address/city is required or invalid",
+          message: "Shipping address: city is required or invalid",
         });
 
       if (!isValidPincode(shipping.pincode))
         return res.status(400).send({
           status: false,
-          message: "Shipping address/pincode is required or invalid",
+          message: "Shipping address: pincode is required or invalid",
         });
 
       //  billing address validation
       if (!isValid(billing.street))
         return res.status(400).send({
           status: false,
-          message: "Billing address/street is required or invalid",
+          message: "Billing address: street is required or invalid",
         });
 
       if (!isValidName(billing.city))
         return res.status(400).send({
           status: false,
-          message: "Billing address/city is required or invalid",
+          message: "Billing address: city is required or invalid",
         });
 
       if (!isValidPincode(billing.pincode))
         return res.status(400).send({
           status: false,
-          message: "Billing address/pincode is required or invalid",
+          message: "Billing address: pincode is required or invalid",
         });
 
       user.address = address;
