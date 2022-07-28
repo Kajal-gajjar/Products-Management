@@ -6,6 +6,7 @@ const {
   isValidNumber,
   isValidRequest,
   isJsonString,
+  isValidValues,
 } = require("../validator/validation");
 
 //-----------------------------------------------Create Product-----------------------------------------------
@@ -76,7 +77,7 @@ const createProduct = async function (req, res) {
         message: `Please input valid Price(Numeric Values Only)!`,
       });
     }
-    product.price = Math.round(req.body.price * 10) / 10;
+    product.price = (Math.round(price * 100) / 100).toFixed(2);
 
     // validation for isFreeShipping
     if (isFreeShipping) product.isFreeShipping = isFreeShipping;
@@ -285,36 +286,160 @@ const getProducstById = async function (req, res) {
 };
 
 //------------------------------------------------Update Product------------------------------------------------
-const updateProductbyId = async function (res, req) {
-  // try{
-  //   const { product: _id} =req.params;
-  //   const {title,description,price,availableSizes} =req.body;
-  //   const checkID = await productModel.findById(_id);
-  //    if (!checkID) {
-  //         return res.status(404).json({ status: false, msg: `${_id} is not present in DB!` });
-  //         }
-  //       const idAlreadyDeleted =await productModel.findOne({_id : _id});
-  //       if (idAlreadyDeleted.isDeleted === true) {
-  //         return res.status(400).json({ status: false, msg: `Product already deleted!` });
-  //         }
-  //         cost (isTitleAlreadyUsed) = await productModel.findonw({ title:title});
-  //         if (isTitleAlreadyUsed){
-  //           return res.status(400).send({status:false, message :`${title} already exists!`});
-  //         }
-  //         if(!isValid(title)){
-  //           return res.status(400).json({status:false, message: `Please input valid Title!`});
-  //       }
-  //       if(!isValid(price)){
-  //         return res.status(400).json({status:false, message: `Please input valid Description!`});
-  //     }
-  //     if(!isValid(description)){
-  //       return res.status(400).json({status:false, message: `Please input valid Description!`});
-  //   }
-  //     const newData = await productModel.findByIdAndUpdate({_id},req.body,{new:true});
-  //     res.status(201).json({staus:true,message:`Updated Succesfully`,data :newData});
-  // }catch(error){
-  //   res.status(500).json({status :false,error:error.message});
-  // }
+const updateProductbyId = async function (req, res) {
+  try {
+    const productId = req.params.productId;
+
+    if (!isValidObjectId(productId))
+      return res
+        .status(400)
+        .send({ status: false, message: "Invalid Product ID" });
+
+    const requestBody = JSON.parse(JSON.stringify(req.body));
+    let productImage = req.files;
+    let {
+      title,
+      description,
+      price,
+      availableSizes,
+      isFreeShipping,
+      style,
+      installments,
+    } = requestBody;
+
+    let product = {};
+
+    if (
+      !isValidValues(requestBody) &&
+      (productImage === undefined || productImage?.length === 0)
+    ) {
+      return res.status(400).send({
+        status: false,
+        message: "Please enter valid Input in request",
+      });
+    }
+
+    // title validation
+    if (requestBody.hasOwnProperty("title")) {
+      if (!isValid(title))
+        return res
+          .status(400)
+          .send({ status: false, message: "Invalid Title" });
+      const checkTitle = await productModel.findOne({ title: title });
+      if (checkTitle)
+        return res.status(400).send({
+          status: false,
+          message: `"${title}"-Title is already in use`,
+        });
+      product.title = title;
+    }
+
+    // description validation
+    if (requestBody.hasOwnProperty("description")) {
+      if (!isValid(description))
+        return res
+          .status(400)
+          .send({ status: false, message: "Invalid Description" });
+      product.description = description
+        .split(" ")
+        .filter((word) => word)
+        .join(" ");
+    }
+
+    // price validation
+    if (requestBody.hasOwnProperty("price")) {
+      if (!isValidNumber(price)) {
+        return res.status(400).json({
+          status: false,
+          message: `Please input valid Price(Numeric Values Only)!`,
+        });
+      }
+      product.price = (Math.round(price * 100) / 100).toFixed(2);
+    }
+
+    // validation for isFreeShipping
+    if (requestBody.hasOwnProperty(isFreeShipping))
+      product.isFreeShipping = isFreeShipping;
+
+    // product image validation
+    if (productImage && productImage.length !== 0) {
+      if (
+        !/\.(gif|jpe?g|tiff?|png|webp|bmp)$/i.test(productImage[0].originalname)
+      )
+        return res.status(400).send({
+          status: false,
+          message: "Profile Image is required as an Image format",
+        });
+      product.productImage = await uploadFile(productImage[0]);
+    }
+
+    // validation for style
+    if (requestBody.hasOwnProperty(style)) {
+      if (!isValid(style))
+        return res
+          .status(400)
+          .send({ status: false, message: "Please enter valid style" });
+      product.style = style;
+    }
+
+    // installments validation
+    if (requestBody.hasOwnProperty(installments)) {
+      if (!isValidNumber(installments))
+        return res
+          .status(400)
+          .send({ status: false, message: "Please enter valid Installments" });
+      product.installments = installments;
+    }
+
+    let size = {};
+    // available size validation
+    if (requestBody.hasOwnProperty("availableSizes")) {
+      availableSizes = availableSizes.split(",").filter((size) => {
+        const trimSize = size.trim();
+        return (
+          isValid(size) &&
+          ["S", "XS", "M", "X", "L", "XXL", "XL"].includes(trimSize)
+        );
+      });
+      if (availableSizes.length == 0)
+        return res.status(400).send({
+          status: false,
+          message: `available sizes should be in valid format and should be from:  S, XS, M, X, L, XXL, XL`,
+        });
+      else size.availableSizes = { $each: availableSizes };
+    }
+
+    const updatedProduct = await productModel.findOneAndUpdate(
+      { _id: productId, isDeleted: false },
+      {
+        $set: {
+          title: product.title,
+          description: product.description,
+          price: product.price,
+          isFreeShipping: product.isFreeShipping,
+          productImage: product.productImage,
+          style: product.style,
+          installments: product.installments,
+        },
+        $addToSet: size,
+      },
+      { new: true }
+    );
+
+    if (!updatedProduct)
+      return res
+        .status(400)
+        .send({ status: false, message: "Product is not found" });
+
+    return res.status(200).send({
+      staus: true,
+      message: `Updated Succesfully`,
+      data: updatedProduct,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ status: false, error: error.message });
+  }
 };
 
 //-----------------------------------------------Delete product by productID-----------------------------------------------
@@ -342,7 +467,7 @@ const deleteProductById = async (req, res) => {
       message: "Request product is deleted sucessfully",
     });
   } catch (error) {
-    return res.status(500).json({ status: false, error: error.message });
+    return res.status(500).send({ status: false, error: error.message });
   }
 };
 
