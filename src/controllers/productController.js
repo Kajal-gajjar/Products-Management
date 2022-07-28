@@ -255,36 +255,67 @@ const getProducts = async (req, res) => {
   }
 };
 
-//-----------------------------------------------Get product by ID-----------------------------------------------
-const getProducstById = async (req, res) => {
-  let id = req.params.productId;
+const updateProductbyId = function async (res,req){
+ 
+try{
+  const { product: _id} =req.params;
+  const {title,description,price,availableSizes} =req.body;
 
-  if (!isValidObjectId(id)) {
-    return res
-      .status(404)
-      .send({ status: false, message: "Please provide a valid productd id" });
+  const checkID = await productModel.findById(_id);
+
+   if (!checkID) {
+        return res.status(404).json({ status: false, msg: `${_id} is not present in DB!` });
+        }
+        
+      const idAlreadyDeleted =await productModel.findOne({_id : _id});
+
+      if (idAlreadyDeleted.isDeleted === true) {
+        return res.status(400).json({ status: false, msg: `Product already deleted!` });
+        }
+
+        cost (isTitleAlreadyUsed) = await productModel.findonw({ title:title});
+
+        if (isTitleAlreadyUsed){
+          return res.status(400).send({status:false, message :`${title} already exists!`});
+
+
+        }
+        if(!isValid(title)){
+          return res.status(400).json({status:false, message: `Please input valid Title!`});
+      }
+      if(!isValid(price)){
+        return res.status(400).json({status:false, message: `Please input valid Description!`});
+    }
+
+    if(!isValid(description)){
+      return res.status(400).json({status:false, message: `Please input valid Description!`});
   }
 
-  let findProductId = await productModel.findById(id).select({ deletedAt: 0 });
+    const newData = await productModel.findByIdAndUpdate({_id},req.body,{new:true});
+    res.status(201).json({staus:true,message:`Updated Succesfully`,data :newData});
 
-  if (!findProductId) {
-    return res.status(404).send({
-      status: false,
-      message: "No product is available with desired id",
-    });
-  }
 
-  if (findProductId.isDeleted == true)
-    return res
-      .status(404)
-      .send({ status: false, message: "Product already deleted" });
-  else
-    return res.status(200).send({
-      status: true,
-      message: "Product found successfully",
-      data: findProductId,
-    });
-};
+}catch(error){
+  res.status(500).json({status :false,error:error.message});
+}
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //-----------------------------------------------Delete product by productID-----------------------------------------------
 const deleteProductById = async (req, res) => {
@@ -320,4 +351,5 @@ module.exports = {
   getProducts,
   getProducstById,
   deleteProductById,
+  updateProductbyId,
 };
