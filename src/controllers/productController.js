@@ -56,12 +56,12 @@ const createProduct = async function (req, res) {
     if (!description) {
       return res
         .status(400)
-        .json({ status: false, message: `Description is mandatory!` });
+        .send({ status: false, message: `Description is mandatory!` });
     }
     if (!isValid(description)) {
       return res
         .status(400)
-        .json({ status: false, message: `Please input valid Description!` });
+        .send({ status: false, message: `Please input valid Description!` });
     }
     product.description = description;
 
@@ -69,10 +69,10 @@ const createProduct = async function (req, res) {
     if (!price) {
       return res
         .status(400)
-        .json({ status: false, message: `Price is mandatory!` });
+        .send({ status: false, message: `Price is mandatory!` });
     }
     if (!isValidNumber(price)) {
-      return res.status(400).json({
+      return res.status(400).send({
         status: false,
         message: `Please input valid Price(Numeric Values Only)!`,
       });
@@ -146,9 +146,9 @@ const createProduct = async function (req, res) {
     product.availableSizes = sizes;
 
     const userData = await productModel.create(product);
-    res.status(201).json({ status: true, data: userData });
+    res.status(201).send({ status: true, data: userData });
   } catch (error) {
-    return res.status(500).json({ status: false, error: error.message });
+    return res.status(500).send({ status: false, error: error.message });
   }
 };
 
@@ -162,6 +162,7 @@ const getProducts = async (req, res) => {
     if (data.size != undefined) {
 
       let size = data.size.split(",");
+      
       
       if (size.length == 0)
         return res
@@ -201,8 +202,10 @@ const getProducts = async (req, res) => {
         });
       filters.price = { $gte: priceGreaterThan, $lte: priceLessThan };
     } else {
+
       if (data.priceGreaterThan != undefined) {
         let priceGreaterThan = data.priceGreaterThan.trim();
+
         if (!isValidNumber(priceGreaterThan))
           return res.status(400).send({
             status: false,
@@ -213,6 +216,7 @@ const getProducts = async (req, res) => {
 
       if (data.priceLessThan != undefined) {
         let priceLessThan = data.priceLessThan.trim();
+
         if (!isValidNumber(priceLessThan))
           return res.status(400).send({
             status: false,
@@ -260,6 +264,7 @@ const getProducts = async (req, res) => {
 
 
 const getProducstById = async function (req, res) {
+
   try {
     let productId = req.params.productId;
 
@@ -329,6 +334,7 @@ const updateProductbyId = async function (req, res) {
         return res
           .status(400)
           .send({ status: false, message: "Invalid Title" });
+
       const checkTitle = await productModel.findOne({ title: title });
       if (checkTitle)
         return res.status(400).send({
@@ -441,7 +447,7 @@ const updateProductbyId = async function (req, res) {
       data: updatedProduct,
     });
   } catch (error) {
-    console.log(error);
+    
     return res.status(500).send({ status: false, error: error.message });
   }
 };
