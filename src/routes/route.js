@@ -14,6 +14,7 @@ const {
 } = require("../controllers/productController");
 
 const { userAuthentication, authorization } = require("../middleware/auth");
+const { createCart } = require("../controllers/cartController");
 const router = express.Router();
 
 /*-------------------------------------User API --------------------------*/
@@ -35,7 +36,10 @@ router.get("/products/:productId", getProducstById);
 router.put("/products/:productId", updateProductbyId);
 router.delete("/products/:productId", deleteProductById);
 
-// validating the route
+//-----------------------------------Cart API---------------------------------
+router.post("/users/:userId/cart", userAuthentication, createCart);
+
+//------------------------------- validating the route---------------------------
 router.all("/*", function (req, res) {
   res.status(400).send({ status: false, message: "invalid http request" });
 });

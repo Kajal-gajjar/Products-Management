@@ -37,12 +37,12 @@ const createProduct = async function (req, res) {
     if (!title) {
       return res
         .status(400)
-        .json({ status: false, message: `Title is mandatory!` });
+        .send({ status: false, message: `Title is mandatory!` });
     }
     if (!isValid(title)) {
       return res
         .status(400)
-        .json({ status: false, message: `Please input valid Title!` });
+        .send({ status: false, message: `Please input valid Title!` });
     }
     const isTitleAlreadyUsed = await productModel.findOne({ title: title });
     if (isTitleAlreadyUsed) {
@@ -120,30 +120,19 @@ const createProduct = async function (req, res) {
         .status(400)
         .send({ status: false, message: "At least one size is required" });
 
-    if (!isValid(availableSizes) || isJsonString(availableSizes))
-      return res.status(400).send({
-        status: false,
-        message: "Please enter valid availableSizes in array",
-      });
-
-    availableSizes = JSON.parse(availableSizes);
-
-    if (!Array.isArray(availableSizes))
-      return res.status(400).send({
-        status: false,
-        message: "enter valid available sizes in array",
-      });
-
-    let sizes = availableSizes.filter(
-      (size) =>
-        isValid(size) && ["S", "XS", "M", "X", "L", "XXL", "XL"].includes(size)
-    );
-    if (sizes.length == 0)
+    availableSizes = availableSizes.split(",").filter((size) => {
+      const trimSize = size.trim();
+      return (
+        isValid(trimSize) &&
+        ["S", "XS", "M", "X", "L", "XXL", "XL"].includes(trimSize)
+      );
+    });
+    if (availableSizes.length == 0)
       return res.status(400).send({
         status: false,
         message: `available sizes should be in valid format and should be from:  S, XS, M, X, L, XXL, XL`,
       });
-    product.availableSizes = sizes;
+    else product.availableSizes = availableSizes;
 
     const userData = await productModel.create(product);
     res.status(201).send({ status: true, data: userData });
@@ -169,9 +158,10 @@ const getProducts = async (req, res) => {
           .status(400)
           .send({ status: false, message: "Please enter valid size" });
 
-      size = size.map((x) => x.trim());
       const validSize = size.forEach((x) => {
-        if (!["S", "XS", "M", "X", "L", "XXL", "XL"].includes(x)) return false;
+        const ele = x.trim();
+        if (!["S", "XS", "M", "X", "L", "XXL", "XL"].includes(ele))
+          return false;
       });
 
       if (validSize == false)
@@ -198,7 +188,7 @@ const getProducts = async (req, res) => {
       if (!isValidNumber(priceLessThan) || !isValidNumber(priceGreaterThan))
         return res.status(400).send({
           status: false,
-          message: "Please enter valid Price",
+          message: "Please enter valid Price range",
         });
       filters.price = { $gte: priceGreaterThan, $lte: priceLessThan };
     } else {
@@ -359,7 +349,7 @@ const updateProductbyId = async function (req, res) {
     // price validation
     if (requestBody.hasOwnProperty("price")) {
       if (!isValidNumber(price)) {
-        return res.status(400).json({
+        return res.status(400).send({
           status: false,
           message: `Please input valid Price(Numeric Values Only)!`,
         });
@@ -368,7 +358,7 @@ const updateProductbyId = async function (req, res) {
     }
 
     // validation for isFreeShipping
-    if (requestBody.hasOwnProperty(isFreeShipping))
+    if (requestBody.hasOwnProperty("isFreeShipping"))
       product.isFreeShipping = isFreeShipping;
 
     // product image validation
@@ -384,7 +374,7 @@ const updateProductbyId = async function (req, res) {
     }
 
     // validation for style
-    if (requestBody.hasOwnProperty(style)) {
+    if (requestBody.hasOwnProperty("style")) {
       if (!isValid(style))
         return res
           .status(400)
@@ -393,7 +383,7 @@ const updateProductbyId = async function (req, res) {
     }
 
     // installments validation
-    if (requestBody.hasOwnProperty(installments)) {
+    if (requestBody.hasOwnProperty("installments")) {
       if (!isValidNumber(installments))
         return res
           .status(400)
@@ -407,7 +397,7 @@ const updateProductbyId = async function (req, res) {
       availableSizes = availableSizes.split(",").filter((size) => {
         const trimSize = size.trim();
         return (
-          isValid(size) &&
+          isValid(trimSize) &&
           ["S", "XS", "M", "X", "L", "XXL", "XL"].includes(trimSize)
         );
       });
@@ -469,10 +459,10 @@ const deleteProductById = async (req, res) => {
     if (!checkID) {
       return res
         .status(404)
-        .json({ status: false, msg: `${productId} is not present in DB!` });
+        .send({ status: false, msg: `${productId} is not present in DB!` });
     }
 
-    res.status(200).json({
+    res.status(200).send({
       status: true,
       message: "Request product is deleted sucessfully",
     });
