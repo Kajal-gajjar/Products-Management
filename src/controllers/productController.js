@@ -120,30 +120,19 @@ const createProduct = async function (req, res) {
         .status(400)
         .send({ status: false, message: "At least one size is required" });
 
-    if (!isValid(availableSizes) || isJsonString(availableSizes))
-      return res.status(400).send({
-        status: false,
-        message: "Please enter valid availableSizes in array",
-      });
-
-    availableSizes = JSON.parse(availableSizes);
-
-    if (!Array.isArray(availableSizes))
-      return res.status(400).send({
-        status: false,
-        message: "enter valid available sizes in array",
-      });
-
-    let sizes = availableSizes.filter(
-      (size) =>
-        isValid(size) && ["S", "XS", "M", "X", "L", "XXL", "XL"].includes(size)
-    );
-    if (sizes.length == 0)
+    availableSizes = availableSizes.split(",").filter((size) => {
+      const trimSize = size.trim();
+      return (
+        isValid(trimSize) &&
+        ["S", "XS", "M", "X", "L", "XXL", "XL"].includes(trimSize)
+      );
+    });
+    if (availableSizes.length == 0)
       return res.status(400).send({
         status: false,
         message: `available sizes should be in valid format and should be from:  S, XS, M, X, L, XXL, XL`,
       });
-    product.availableSizes = sizes;
+    else product.availableSizes = availableSizes;
 
     const userData = await productModel.create(product);
     res.status(201).send({ status: true, data: userData });
@@ -398,7 +387,7 @@ const updateProductbyId = async function (req, res) {
       availableSizes = availableSizes.split(",").filter((size) => {
         const trimSize = size.trim();
         return (
-          isValid(size) &&
+          isValid(trimSize) &&
           ["S", "XS", "M", "X", "L", "XXL", "XL"].includes(trimSize)
         );
       });
