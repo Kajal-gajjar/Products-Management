@@ -299,7 +299,7 @@ Send [form-data](https://developer.mozilla.org/en-US/docs/Web/API/FormData)
 ### GET /users/:userId/cart
 - Returns cart summary of the user.
 - Make sure that cart exist.
-- Make sure the userId in params and in JWT token match.
+- Make sure the userI`d in params and in JWT token match.
 - Make sure the user exist
 - Get product(s) details in response body.
 - __Response format__
