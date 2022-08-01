@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const { isValidObjectId } = require("mongoose");
 const cartModel = require("../models/cartModel");
-const userModel = require("../models/userModel");
 const productModel = require("../models/productModel");
 const { isValidRequest, isValidNumber } = require("../validator/validation");
 
@@ -184,4 +183,42 @@ const updateCart = async function (req, res) {
   }
 };
 
-module.exports = { createCart, updateCart };
+//------------------------------------------------Get cart--------------------------------------------------
+const getCart = async (req, res) => {
+  try {
+    let userId = req.user._id;
+
+    const userCart = await cartModel.findOne({ userId: userId });
+    if (!userCart) {
+      return res.status(404).send({ status: false, message: "no cart Found" });
+    }
+    res.status(200).send({ status: true, data: userCart });
+  } catch (error) {
+    res.status(500).send({ status: false, error: error.message });
+  }
+};
+
+//----------------------------------------------Delete cart------------------------------------------------
+const deleteCart = async (req, res) => {
+  try {
+    let userId = req.user._id;
+
+    let cart = {
+      items: [],
+      totalItems: 0,
+      totalPrice: 0,
+    };
+    const updatedCart = await cartModel.findOneAndUpdate(
+      { userId: userId },
+      cart
+    );
+    if (!updatedCart) {
+      return res.status(404).send({ status: false, message: "no cart Found" });
+    }
+    res.status(200).send({ status: true, message: "cart is deleted" });
+  } catch (error) {
+    res.status(500).send({ status: false, error: error.message });
+  }
+};
+
+module.exports = { createCart, getCart, deleteCart, updateCart };

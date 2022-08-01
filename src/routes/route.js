@@ -12,9 +12,13 @@ const {
   deleteProductById,
   updateProductbyId,
 } = require("../controllers/productController");
-
 const { userAuthentication, authorization } = require("../middleware/auth");
-const { createCart, updateCart } = require("../controllers/cartController");
+const {
+  createCart,
+  getCart,
+  deleteCart,
+  updateCart,
+} = require("../controllers/cartController");
 const router = express.Router();
 
 /*-------------------------------------User API --------------------------*/
@@ -43,6 +47,13 @@ router.put(
   userAuthentication,
   authorization,
   updateCart
+);
+router.get("/users/:userId/cart", userAuthentication, authorization, getCart);
+router.delete(
+  "/users/:userId/cart",
+  userAuthentication,
+  authorization,
+  deleteCart
 );
 
 //------------------------------- validating the route---------------------------
