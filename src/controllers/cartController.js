@@ -25,7 +25,7 @@ const createCart = async function (req, res) {
 
     const { productId, quantity } = req.body;
 
-    if (productId || quantity)
+    if (!productId && !quantity)
       return res.status(400).send({
         status: false,
         message: "Please enter productID and Quantity in request body",
