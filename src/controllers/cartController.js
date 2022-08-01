@@ -1,4 +1,3 @@
-const mongoose = require("mongoose");
 const { isValidObjectId } = require("mongoose");
 const cartModel = require("../models/cartModel");
 const productModel = require("../models/productModel");
@@ -24,53 +23,55 @@ const createCart = async function (req, res) {
         message: `Invalid Input. Body can't be empty!`,
       });
 
-    const items = req.body.items;
+    const { productId, quantity } = req.body;
+
+    if (productId || quantity)
+      return res.status(400).send({
+        status: false,
+        message: "Please enter productID and Quantity in request body",
+      });
 
     let finalCart = { items: [], totalItems: 0, totalPrice: 0 };
 
-    for (let i = 0; i < items.length; i++) {
-      const { productId, quantity } = items[i];
-      const product = {};
-      // product ID validation
-      if (!items[i].hasOwnProperty("productId"))
-        return res
-          .status(400)
-          .send({ status: false, message: `Product ID is required!` });
+    const product = {};
+    // product ID validation
+    if (!productId)
+      return res
+        .status(400)
+        .send({ status: false, message: `Product ID is required!` });
 
-      if (!isValidObjectId(productId))
-        return res
-          .status(400)
-          .send({ status: false, message: `Invalid Product ID!` });
+    if (!isValidObjectId(productId))
+      return res
+        .status(400)
+        .send({ status: false, message: `Invalid Product ID!` });
 
-      const findProduct = await productModel.findOne({
-        _id: productId,
-        isDeleted: false,
+    const findProduct = await productModel.findOne({
+      _id: productId,
+      isDeleted: false,
+    });
+    if (!findProduct)
+      return res.status(404).send({
+        status: false,
+        message: `Product- ${productId} is not found`,
       });
-      if (!findProduct)
-        return res.status(404).send({
-          status: false,
-          message: `Product- ${productId} is not found`,
-        });
-      product.productId = productId;
+    product.productId = productId;
 
-      // quantity validation
-      if (!quantity)
-        return res
-          .status(400)
-          .send({ staus: false, message: `Quantity is required` });
+    // quantity validation
+    if (!quantity)
+      return res
+        .status(400)
+        .send({ staus: false, message: `Quantity is required` });
 
-      if (!isValidNumber(quantity) || quantity <= 0)
-        return res
-          .status(400)
-          .send({ staus: false, message: `Minimum 1 quantity is required` });
-      product.quantity = Math.floor(quantity);
-
-      finalCart.items.push(product);
-      finalCart.totalItems++;
-      finalCart.totalPrice += product.quantity * findProduct.price;
-    }
+    if (!isValidNumber(quantity) || quantity <= 0)
+      return res
+        .status(400)
+        .send({ staus: false, message: `Minimum 1 quantity is required` });
+    product.quantity = Math.floor(quantity);
 
     finalCart.userId = userIdFromPrams;
+    finalCart.items.push(product);
+    finalCart.totalItems++;
+    finalCart.totalPrice += product.quantity * findProduct.price;
 
     let findCart = await cartModel.findOne({ userId: userIdFromPrams });
     if (!findCart) {
@@ -106,6 +107,17 @@ const updateCart = async function (req, res) {
   try {
     const userId = req.user._id;
     let { cartId, productId, removeProduct } = req.body;
+
+    // cart ID validation
+    if (!cartId)
+      return res
+        .status(400)
+        .send({ status: false, message: "Cart ID is required" });
+
+    if (!isValidObjectId(cartId))
+      return res
+        .status(400)
+        .send({ status: false, message: "Cart Id is invalid" });
 
     if (!productId)
       return res
@@ -166,7 +178,12 @@ const updateCart = async function (req, res) {
       updateProduct.totalItems = cart.totalItems - 1;
       updateProduct.totalPrice =
         cart.totalPrice - product.price * productToUpdate.quantity;
-    }
+    } else
+      return res.status(400).send({
+        status: false,
+        message:
+          "Please enter 0 to remove product or 1 to decrease quantity of product",
+      });
 
     const updatedCart = await cartModel.findOneAndUpdate(
       { _id: cartId, userId: userId },
