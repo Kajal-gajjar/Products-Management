@@ -106,18 +106,15 @@ const createCart = async function (req, res) {
 
 const getCart = async (req, res) => {
   try {
-    let { userId: _id } = req.params;
-    if (isValidObjectId(_id)) {
-      return res.status(400).sent({ staus: false, message: "invalid ID" });
-    }
-
-    const userCart = await cartModel.findOne({ userId: _id });
+    let  userId = req.user._id
+ 
+    const userCart = await cartModel.findOne({ userId: userId });
     if (!userCart) {
-      return res.status(404).sent({ staus: false, message: "no cart Found" });
+      return res.status(404).send({ status: false, message: "no cart Found" });
     }
-    res.status(200).sent({ staus: true, data: userCart });
+    res.status(200).send({ status: true, data: userCart });
   } catch (error) {
-    res.status(500).send({ staus: false, error: error.message });
+    res.status(500).send({ status: false, error: error.message });
   }
 };
 
