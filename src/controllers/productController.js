@@ -5,7 +5,6 @@ const {
   isValid,
   isValidNumber,
   isValidRequest,
-  isJsonString,
   isValidValues,
 } = require("../validator/validation");
 
