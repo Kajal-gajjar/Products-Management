@@ -104,4 +104,21 @@ const createCart = async function (req, res) {
   }
 };
 
-module.exports = { createCart };
+const getCart = async (req, res) => {
+  try {
+    let { userId: _id } = req.params;
+    if (isValidObjectId(_id)) {
+      return res.status(400).sent({ staus: false, message: "invalid ID" });
+    }
+
+    const userCart = await cartModel.findOne({ userId: _id });
+    if (!userCart) {
+      return res.status(404).sent({ staus: false, message: "no cart Found" });
+    }
+    res.status(200).sent({ staus: true, data: userCart });
+  } catch (error) {
+    res.status(500).send({ staus: false, error: error.message });
+  }
+};
+
+module.exports = { createCart, getCart };
