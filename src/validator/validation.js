@@ -18,9 +18,9 @@ const isValidValues = function (data) {
   return true;
 };
 
-const isValidObjectId = (objectId) => {
-  return mongoose.Types.ObjectId.isValid(objectId);
-};
+// const isValidObjectId = (objectId) => {
+//   return mongoose.Types.ObjectId.isValid(objectId);
+// };
 
 // function for name verification
 const isValidName = function (name) {

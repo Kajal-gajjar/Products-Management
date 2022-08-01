@@ -99,7 +99,7 @@ const createCart = async function (req, res) {
         .send({ status: true, message: "Cart is Updated", data: cart });
     }
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     res.status(500).send({ status: false, error: error.message });
   }
 };

@@ -475,6 +475,6 @@ module.exports = {
   createProduct,
   getProducts,
   getProducstById,
-  deleteProductById,
   updateProductbyId,
+  deleteProductById
 };
