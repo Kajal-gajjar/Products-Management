@@ -118,4 +118,33 @@ const getCart = async (req, res) => {
   }
 };
 
-module.exports = { createCart, getCart };
+
+
+
+const deleteCart = async (req,res)=>{
+    try{
+         
+        let  userId = req.user._id;
+
+        let cart ={
+            items:[],
+            totalItems :0,
+            totalPrice :0
+
+        }
+      const updatedCart = await cartModel.findOneAndUpdate({ userId:userId },cart)
+      if(!updatedCart){
+        return res.status(404).send({ status: false, message: "no cart Found" });
+      }
+      res.status(200).send({status :true, message :"cart is deleted" })
+     
+         
+
+
+
+    }catch (error) {
+        res.status(500).send({ status: false, error: error.message });
+}
+}
+
+module.exports = { createCart, getCart,deleteCart  };
