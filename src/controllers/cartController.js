@@ -104,4 +104,16 @@ const createCart = async function (req, res) {
   }
 };
 
-module.exports = { createCart };
+const updateCart = async function (req, res) {
+
+  let cartId = req.user._id
+  let { productId, removeProduct } = req.body
+
+  let 
+
+
+  
+
+}
+
+module.exports = { createCart, updateCart };
