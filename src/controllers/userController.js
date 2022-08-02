@@ -22,7 +22,7 @@ const registerUser = async function (req, res) {
     if (!isValidRequest(req.body) || req.files.length == 0)
       return res
         .status(400)
-        .send({ status: false, message: "Please enter valid Input" });
+        .send({ status: false, message: "Please enter valid Input ( profile image and credential" });
 
     let { fname, lname, email, phone, password, address } = req.body;
     let profileImage = req.files;
@@ -55,7 +55,7 @@ const registerUser = async function (req, res) {
     if (!email)
       return res
         .status(400)
-        .send({ status: false, message: "Last name of user is required" });
+        .send({ status: false, message: "Email is required" });
     if (!isValidMail(email))
       return res
         .status(400)
@@ -193,7 +193,7 @@ const loginUser = async function (req, res) {
     if (!isValidRequest(req.body)) {
       return res.status(400).json({
         status: false,
-        msg: `Invalid input. Please enter email and password!`,
+        message: `Invalid input. Please enter email and password!`,
       });
     }
     const { email, password } = req.body;
@@ -201,22 +201,22 @@ const loginUser = async function (req, res) {
     if (!email) {
       return res
         .status(400)
-        .json({ status: false, msg: `email is mandatory field!` });
+        .json({ status: false, message: `email is mandatory field!` });
     }
     if (!password) {
       return res
         .status(400)
-        .json({ status: false, msg: `password is mandatory field!` });
+        .json({ status: false, message: `password is mandatory field!` });
     }
     if (!isValidMail(email)) {
       return res
         .status(400)
-        .json({ status: false, msg: `Invalid eMail Address!` });
+        .json({ status: false, message: `Invalid eMail Address!` });
     }
     if (!isValidPassword(password)) {
       return res
         .status(400)
-        .json({ status: false, msg: `password is mandatory field!` });
+        .json({ status: false, message: `password is mandatory field!` });
     }
 
     const findUser = await userModel.findOne({
@@ -231,7 +231,7 @@ const loginUser = async function (req, res) {
     if (!findUser.validPassword(req.body.password)) {
       return res
         .status(401)
-        .json({ status: false, msg: "Password is incorrect" });
+        .json({ status: false, message: "Password is incorrect" });
     }
 
     const token = jwt.sign(
@@ -269,7 +269,7 @@ const getUserProfile = async function (req, res) {
     if (!filteredUser)
       return res
         .status(404)
-        .send({ status: false, msg: "No such data available" });
+        .send({ status: false, message: "No such data available" });
 
     if (filters !== req.token.userId)
       return res.status(401).send({

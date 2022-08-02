@@ -134,7 +134,7 @@ const createProduct = async function (req, res) {
     else product.availableSizes = availableSizes;
 
     const userData = await productModel.create(product);
-    res.status(201).send({ status: true, data: userData });
+    res.status(201).send({ status: true, message: "Success", data: userData });
   } catch (error) {
     return res.status(500).send({ status: false, error: error.message });
   }
@@ -242,7 +242,7 @@ const getProducts = async (req, res) => {
 
     return res
       .status(200)
-      .send({ status: true, message: "success", data: productData });
+      .send({ status: true, message: "Success", data: productData });
   } catch (error) {
     console.log(error);
     return res.status(500).send({ status: false, error: error.message });
@@ -277,7 +277,7 @@ const getProducstById = async function (req, res) {
 
     return res
       .status(200)
-      .send({ status: true, message: "Product found", data: getProduct });
+      .send({ status: true, message: "Success", data: getProduct });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
@@ -432,7 +432,7 @@ const updateProductbyId = async function (req, res) {
 
     return res.status(200).send({
       staus: true,
-      message: `Updated Succesfully`,
+      message: `Update product details is successful`,
       data: updatedProduct,
     });
   } catch (error) {
