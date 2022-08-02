@@ -6,16 +6,7 @@ const { isValidRequest, isValidNumber } = require("../validator/validation");
 // ----------------------------------------------Create cart------------------------------------------------
 const createCart = async function (req, res) {
   try {
-    let userIdFromPrams = req.params.userId;
-    if (!isValidObjectId(userIdFromPrams))
-      return res
-        .status(400)
-        .send({ status: false, message: `Invalid User ID!` });
-
-    if (userIdFromPrams != req.token.userId)
-      return res
-        .status(403)
-        .send({ status: false, message: `You are not authorized` });
+    let userIdFromPrams = req.user._id;
 
     if (!isValidRequest(req.body))
       return res.status(400).send({
@@ -23,13 +14,14 @@ const createCart = async function (req, res) {
         message: `Invalid Input. Body can't be empty!`,
       });
 
-    const { productId, quantity } = req.body;
+    const { productId, quantity, cartId } = req.body;
 
-    if (!productId && !quantity)
-      return res.status(400).send({
-        status: false,
-        message: "Please enter productID and Quantity in request body",
-      });
+    if (cartId) {
+      if (!isValidObjectId(cartId))
+        return res
+          .status(400)
+          .send({ status: false, message: "Invalid CartId" });
+    }
 
     let finalCart = { items: [], totalItems: 0, totalPrice: 0 };
 
@@ -57,45 +49,64 @@ const createCart = async function (req, res) {
     product.productId = productId;
 
     // quantity validation
-    if (!quantity)
-      return res
-        .status(400)
-        .send({ staus: false, message: `Quantity is required` });
-
-    if (!isValidNumber(quantity) || quantity <= 0)
-      return res
-        .status(400)
-        .send({ staus: false, message: `Minimum 1 quantity is required` });
-    product.quantity = Math.floor(quantity);
-
-    finalCart.userId = userIdFromPrams;
-    finalCart.items.push(product);
-    finalCart.totalItems++;
-    finalCart.totalPrice += product.quantity * findProduct.price;
+    if (quantity) {
+      if (!isValidNumber(quantity) || quantity <= 0)
+        return res
+          .status(400)
+          .send({ staus: false, message: `Minimum 1 quantity is required` });
+      product.quantity = Math.floor(quantity);
+    } else product.quantity = 1;
 
     let findCart = await cartModel.findOne({ userId: userIdFromPrams });
+
+    let cart = {};
+    // cart is not present
     if (!findCart) {
-      findCart = await cartModel.create(finalCart);
-      return res
-        .status(201)
-        .send({ status: true, message: "Success", data: finalCart });
+      finalCart.userId = userIdFromPrams;
+      finalCart.items.push(product);
+      finalCart.totalItems++;
+      finalCart.totalPrice += product.quantity * findProduct.price;
+
+      cart = await cartModel.create(finalCart);
     } else {
-      findCart.totalItems += finalCart.totalItems;
-      findCart.totalPrice += finalCart.totalPrice;
-      findCart.items = [...findCart.items, ...finalCart.items];
+      let items = findCart.items;
 
-      const cart = await cartModel.findOneAndUpdate(
-        { _id: findCart.id },
-        findCart,
-        {
-          new: true,
+      let productPresent = false;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].productId == productId) {
+          productPresent = true;
+          items[i].quantity = items[i].quantity + product.quantity;
+          findCart.totalPrice += product.quantity * findProduct.price;
         }
-      );
+      }
 
-      return res
-        .status(200)
-        .send({ status: true, message: "Cart is Updated", data: cart });
+      if (!productPresent) {
+        findCart.totalPrice += product.quantity * findProduct.price;
+        findCart.items.push(product);
+      }
+
+      findCart.totalItems += finalCart.totalItems;
+
+      cart = await cartModel.findOneAndUpdate({ _id: findCart.id }, findCart, {
+        new: true,
+      });
     }
+
+    cart = await cartModel.findOne({ userId: userIdFromPrams }).populate({
+      path: "items.productId",
+      select: {
+        _id: 1,
+        title: 1,
+        description: 1,
+        price: 1,
+        productImage: 1,
+        style: 1,
+      },
+    });
+
+    return res
+      .status(200)
+      .send({ status: true, message: "Cart is Updated", data: cart });
   } catch (error) {
     // console.log(error);
     res.status(500).send({ status: false, error: error.message });
@@ -232,7 +243,7 @@ const deleteCart = async (req, res) => {
     if (!updatedCart) {
       return res.status(404).send({ status: false, message: "No cart Found" });
     }
-    res.status(200).send({ status: true, message: "Cart is deleted successfully" });
+    res.status(204).send({ status: true, message: "cart is deleted" });
   } catch (error) {
     res.status(500).send({ status: false, error: error.message });
   }
