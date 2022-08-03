@@ -119,16 +119,24 @@ const updateCart = async function (req, res) {
     const userId = req.user._id;
     let { cartId, productId, removeProduct } = req.body;
 
-    // cart ID validation
-    if (!cartId)
+    let cart = await cartModel.findOne({ userId: userId });
+    if (!cart)
       return res
         .status(400)
-        .send({ status: false, message: "Cart ID is required" });
+        .send({ status: false, message: "Cart is invalid" });
 
-    if (!isValidObjectId(cartId))
-      return res
-        .status(400)
-        .send({ status: false, message: "Cart Id is invalid" });
+    // cart ID validation
+    if (cartId) {
+      if (!isValidObjectId(cartId))
+        return res
+          .status(400)
+          .send({ status: false, message: "Cart Id is invalid" });
+      if (cart._id != cartId)
+        return res.status(400).send({
+          status: false,
+          message: "Cart is not belong to mentioned userID",
+        });
+    } else cartId = cart._id;
 
     if (!productId)
       return res
@@ -151,12 +159,6 @@ const updateCart = async function (req, res) {
         .status(400)
         .send({ status: false, message: "Product Id is deleted" });
 
-    let cart = await cartModel.findOne({ _id: cartId, userId: userId });
-    if (!cart)
-      return res
-        .status(400)
-        .send({ status: false, message: "Cart is invalid" });
-
     let productInCart = cart.items;
     let productToUpdate;
     let indexOfProduct = 0;
@@ -173,15 +175,26 @@ const updateCart = async function (req, res) {
         .send({ status: false, message: "Product is not found in cart" });
 
     let updateProduct = {};
+
+    if (![0, 1].includes(removeProduct))
+      return res.status(400).send({
+        status: false,
+        message:
+          "Please enter 0 to remove product or 1 to decrease quantity of product",
+      });
+
     if (removeProduct == 1) {
       for (let i = 0; i < productInCart.length; i++) {
         if (productInCart[i].productId == productId) {
           productInCart[i].quantity = --productToUpdate.quantity;
+          indexOfProduct = i;
+          productToUpdate = productInCart[i];
         }
       }
       updateProduct.items = productInCart;
       updateProduct.totalPrice = cart.totalPrice - product.price;
-    } else if (removeProduct == 0) {
+    }
+    if (removeProduct == 0 || productToUpdate.quantity <= 0) {
       updateProduct.items = [
         ...productInCart.slice(0, indexOfProduct),
         ...productInCart.slice(indexOfProduct + 1, productInCart.length),
@@ -189,12 +202,7 @@ const updateCart = async function (req, res) {
       updateProduct.totalItems = cart.totalItems - 1;
       updateProduct.totalPrice =
         cart.totalPrice - product.price * productToUpdate.quantity;
-    } else
-      return res.status(400).send({
-        status: false,
-        message:
-          "Please enter 0 to remove product or 1 to decrease quantity of product",
-      });
+    }
 
     const updatedCart = await cartModel.findOneAndUpdate(
       { _id: cartId, userId: userId },

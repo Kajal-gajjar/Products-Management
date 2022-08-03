@@ -41,7 +41,12 @@ router.put("/products/:productId", updateProductbyId);
 router.delete("/products/:productId", deleteProductById);
 
 //-----------------------------------Cart API---------------------------------
-router.post("/users/:userId/cart", userAuthentication, createCart);
+router.post(
+  "/users/:userId/cart",
+  userAuthentication,
+  authorization,
+  createCart
+);
 router.put(
   "/users/:userId/cart",
   userAuthentication,

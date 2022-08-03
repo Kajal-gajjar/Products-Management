@@ -25,12 +25,11 @@ const createProduct = async function (req, res) {
       isFreeShipping,
       style,
       installments,
+      currencyId,
+      currencyFormat,
     } = req.body;
 
     let product = {};
-
-    product.currencyId = "INR";
-    product.currencyFormat = "₹";
 
     // title validation
     if (!title) {
@@ -132,6 +131,25 @@ const createProduct = async function (req, res) {
         message: `available sizes should be in valid format and should be from:  S, XS, M, X, L, XXL, XL`,
       });
     else product.availableSizes = availableSizes;
+
+    if (currencyId) {
+      if (!["INR", "USD"].includes(currencyId))
+        return res
+          .status(400)
+          .send({ status: false, message: "Only INR/USD currency is allowed" });
+      product.currencyId = currencyId;
+    } else product.currencyId = "INR";
+
+    if (currencyFormat) {
+      if (!["₹", "$"].includes(currencyFormat))
+        return res
+          .status(400)
+          .send({
+            status: false,
+            message: "Only ₹/$ currency format is allowed",
+          });
+      product.currencyFormat = currencyFormat;
+    } else product.currencyFormat = "₹";
 
     const userData = await productModel.create(product);
     res.status(201).send({ status: true, data: userData });
