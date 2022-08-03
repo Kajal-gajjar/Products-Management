@@ -152,7 +152,7 @@ const createProduct = async function (req, res) {
     } else product.currencyFormat = "₹";
 
     const userData = await productModel.create(product);
-    res.status(201).send({ status: true, data: userData });
+    res.status(201).send({ status: true, message: "Success", data: userData });
   } catch (error) {
     return res.status(500).send({ status: false, error: error.message });
   }
@@ -166,7 +166,10 @@ const getProducts = async (req, res) => {
 
     // size validation
     if (data.size != undefined) {
+
       let size = data.size.split(",");
+      
+      
       if (size.length == 0)
         return res
           .status(400)
@@ -206,8 +209,10 @@ const getProducts = async (req, res) => {
         });
       filters.price = { $gte: priceGreaterThan, $lte: priceLessThan };
     } else {
+
       if (data.priceGreaterThan != undefined) {
         let priceGreaterThan = data.priceGreaterThan.trim();
+
         if (!isValidNumber(priceGreaterThan))
           return res.status(400).send({
             status: false,
@@ -218,6 +223,7 @@ const getProducts = async (req, res) => {
 
       if (data.priceLessThan != undefined) {
         let priceLessThan = data.priceLessThan.trim();
+
         if (!isValidNumber(priceLessThan))
           return res.status(400).send({
             status: false,
@@ -254,7 +260,7 @@ const getProducts = async (req, res) => {
 
     return res
       .status(200)
-      .send({ status: true, message: "success", data: productData });
+      .send({ status: true, message: "Success", data: productData });
   } catch (error) {
     console.log(error);
     return res.status(500).send({ status: false, error: error.message });
@@ -262,7 +268,10 @@ const getProducts = async (req, res) => {
 };
 
 //-----------------------------------------------Get product by ID-----------------------------------------------
+
+
 const getProducstById = async function (req, res) {
+
   try {
     let productId = req.params.productId;
 
@@ -286,7 +295,7 @@ const getProducstById = async function (req, res) {
 
     return res
       .status(200)
-      .send({ status: true, message: "Product found", data: getProduct });
+      .send({ status: true, message: "Success", data: getProduct });
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
@@ -332,6 +341,7 @@ const updateProductbyId = async function (req, res) {
         return res
           .status(400)
           .send({ status: false, message: "Invalid Title" });
+
       const checkTitle = await productModel.findOne({ title: title });
       if (checkTitle)
         return res.status(400).send({
@@ -440,11 +450,11 @@ const updateProductbyId = async function (req, res) {
 
     return res.status(200).send({
       staus: true,
-      message: `Updated Succesfully`,
+      message: `Update product details is successful`,
       data: updatedProduct,
     });
   } catch (error) {
-    console.log(error);
+    
     return res.status(500).send({ status: false, error: error.message });
   }
 };
@@ -482,6 +492,6 @@ module.exports = {
   createProduct,
   getProducts,
   getProducstById,
-  deleteProductById,
   updateProductbyId,
+  deleteProductById
 };

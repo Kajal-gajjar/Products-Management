@@ -22,7 +22,10 @@ const registerUser = async function (req, res) {
     if (!isValidRequest(req.body) || req.files.length == 0)
       return res
         .status(400)
-        .send({ status: false, message: "Please enter valid Input" });
+        .send({
+          status: false,
+          message: "Please enter valid Input ( profile image and credential",
+        });
 
     let { fname, lname, email, phone, password, address } = req.body;
     let profileImage = req.files;
@@ -55,7 +58,7 @@ const registerUser = async function (req, res) {
     if (!email)
       return res
         .status(400)
-        .send({ status: false, message: "Last name of user is required" });
+        .send({ status: false, message: "Email is required" });
     if (!isValidMail(email))
       return res
         .status(400)
