@@ -85,7 +85,7 @@ const createCart = async function (req, res) {
         findCart.items.push(product);
       }
 
-      findCart.totalItems += finalCart.totalItems;
+      findCart.totalItems = findCart.items.length;
 
       cart = await cartModel.findOneAndUpdate({ _id: findCart.id }, findCart, {
         new: true,
@@ -199,16 +199,29 @@ const updateCart = async function (req, res) {
         ...productInCart.slice(0, indexOfProduct),
         ...productInCart.slice(indexOfProduct + 1, productInCart.length),
       ];
-      updateProduct.totalItems = cart.totalItems - 1;
-      updateProduct.totalPrice =
-        cart.totalPrice - product.price * productToUpdate.quantity;
+      updateProduct.totalItems = --cart.totalItems;
+      if (productToUpdate.quantity == 0)
+        updateProduct.totalPrice = cart.totalPrice - product.price;
+      else
+        updateProduct.totalPrice =
+          cart.totalPrice - product.price * productToUpdate.quantity;
     }
 
-    const updatedCart = await cartModel.findOneAndUpdate(
-      { _id: cartId, userId: userId },
-      updateProduct,
-      { new: true }
-    );
+    const updatedCart = await cartModel
+      .findOneAndUpdate({ _id: cartId, userId: userId }, updateProduct, {
+        new: true,
+      })
+      .populate({
+        path: "items.productId",
+        select: {
+          _id: 1,
+          title: 1,
+          description: 1,
+          price: 1,
+          productImage: 1,
+          style: 1,
+        },
+      });
 
     return res
       .status(200)
@@ -224,7 +237,17 @@ const getCart = async (req, res) => {
   try {
     let userId = req.user._id;
 
-    const userCart = await cartModel.findOne({ userId: userId });
+    const userCart = await cartModel.findOne({ userId: userId }).populate({
+      path: "items.productId",
+      select: {
+        _id: 1,
+        title: 1,
+        description: 1,
+        price: 1,
+        productImage: 1,
+        style: 1,
+      },
+    });
     if (!userCart) {
       return res.status(404).send({ status: false, message: "no cart Found" });
     }
