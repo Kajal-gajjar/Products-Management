@@ -140,16 +140,8 @@ const createProduct = async function (req, res) {
       product.currencyId = currencyId;
     } else product.currencyId = "INR";
 
-    if (currencyFormat) {
-      if (!["₹", "$"].includes(currencyFormat))
-        return res
-          .status(400)
-          .send({
-            status: false,
-            message: "Only ₹/$ currency format is allowed",
-          });
-      product.currencyFormat = currencyFormat;
-    } else product.currencyFormat = "₹";
+    if (currencyId == "INR") product.currencyFormat = "₹";
+    else if (currencyId == "USD") product.currencyFormat = "$";
 
     const userData = await productModel.create(product);
     res.status(201).send({ status: true, message: "Success", data: userData });
@@ -166,10 +158,8 @@ const getProducts = async (req, res) => {
 
     // size validation
     if (data.size != undefined) {
-
       let size = data.size.split(",");
-      
-      
+
       if (size.length == 0)
         return res
           .status(400)
@@ -207,9 +197,8 @@ const getProducts = async (req, res) => {
           status: false,
           message: "Please enter valid Price range",
         });
-      filters.price = { $gte: priceGreaterThan, $lte: priceLessThan };
+      filters.price = { $gt: priceGreaterThan, $lt: priceLessThan };
     } else {
-
       if (data.priceGreaterThan != undefined) {
         let priceGreaterThan = data.priceGreaterThan.trim();
 
@@ -269,9 +258,7 @@ const getProducts = async (req, res) => {
 
 //-----------------------------------------------Get product by ID-----------------------------------------------
 
-
 const getProducstById = async function (req, res) {
-
   try {
     let productId = req.params.productId;
 
@@ -450,11 +437,10 @@ const updateProductbyId = async function (req, res) {
 
     return res.status(200).send({
       staus: true,
-      message: `Update product details is successful`,
+      message: "Update product details is successful",
       data: updatedProduct,
     });
   } catch (error) {
-    
     return res.status(500).send({ status: false, error: error.message });
   }
 };
@@ -476,7 +462,7 @@ const deleteProductById = async (req, res) => {
     if (!checkID) {
       return res
         .status(404)
-        .send({ status: false, msg: `${productId} is not present in DB!` });
+        .send({ status: false, msg: `${productId} is not found in DB!` });
     }
 
     res.status(200).send({
@@ -493,5 +479,5 @@ module.exports = {
   getProducts,
   getProducstById,
   updateProductbyId,
-  deleteProductById
+  deleteProductById,
 };

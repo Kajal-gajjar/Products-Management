@@ -19,6 +19,7 @@ const {
   deleteCart,
   updateCart,
 } = require("../controllers/cartController");
+const { createOrder, updateOrder } = require("../controllers/orderController");
 const router = express.Router();
 
 /*-------------------------------------User API --------------------------*/
@@ -59,6 +60,20 @@ router.delete(
   userAuthentication,
   authorization,
   deleteCart
+);
+
+//----------------------------------Order API------------------------------------
+router.post(
+  "/users/:userId/orders",
+  userAuthentication,
+  authorization,
+  createOrder
+);
+router.put(
+  "/users/:userId/orders",
+  userAuthentication,
+  authorization,
+  updateOrder
 );
 
 //------------------------------- validating the route---------------------------

@@ -105,8 +105,8 @@ const createCart = async function (req, res) {
     });
 
     return res
-      .status(200)
-      .send({ status: true, message: "Cart is Updated", data: cart });
+      .status(201)
+      .send({ status: true, message: "Success", data: cart });
   } catch (error) {
     // console.log(error);
     res.status(500).send({ status: false, error: error.message });
@@ -225,7 +225,7 @@ const updateCart = async function (req, res) {
 
     return res
       .status(200)
-      .send({ status: true, message: "Cart is updated", data: updatedCart });
+      .send({ status: true, message: "Success", data: updatedCart });
   } catch (error) {
     console.log(error);
     return res.status(500).send({ status: false, message: error.message });
@@ -251,7 +251,7 @@ const getCart = async (req, res) => {
     if (!userCart) {
       return res.status(404).send({ status: false, message: "no cart Found" });
     }
-    res.status(200).send({ status: true, data: userCart });
+    res.status(200).send({ status: true, message: "Success", data: userCart });
   } catch (error) {
     res.status(500).send({ status: false, error: error.message });
   }

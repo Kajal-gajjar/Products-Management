@@ -20,12 +20,10 @@ const {
 const registerUser = async function (req, res) {
   try {
     if (!isValidRequest(req.body) || req.files.length == 0)
-      return res
-        .status(400)
-        .send({
-          status: false,
-          message: "Please enter valid Input ( profile image and credential",
-        });
+      return res.status(400).send({
+        status: false,
+        message: "Please enter valid Input ( profile image and credential)",
+      });
 
     let { fname, lname, email, phone, password, address } = req.body;
     let profileImage = req.files;
@@ -111,7 +109,7 @@ const registerUser = async function (req, res) {
       return res.status(400).send({
         status: false,
         message:
-          "Password should contain 8 to 15 characters, one special character, a number and should not contain space",
+          "Password should contain 8 to 15 characters in upper and lower case, one special character, a number and should not contain space",
       });
     // hash the password
     user.password = generateHash(password);
@@ -151,7 +149,7 @@ const registerUser = async function (req, res) {
           message: "Shipping address: street is required or invalid",
         });
 
-      if (!isValidName(shipping.city))
+      if (!isValid(shipping.city))
         return res.status(400).send({
           status: false,
           message: "Shipping address: city is required or invalid",
@@ -163,6 +161,12 @@ const registerUser = async function (req, res) {
           message: "Shipping address: pincode is required or invalid",
         });
 
+      if (!isValidRequest(billing))
+        return res.status(400).send({
+          status: false,
+          message: "Valid Billing address is required",
+        });
+
       //  billing address validation
       if (!isValid(billing.street))
         return res.status(400).send({
@@ -170,7 +174,7 @@ const registerUser = async function (req, res) {
           message: "Billing address: street is required or invalid",
         });
 
-      if (!isValidName(billing.city))
+      if (!isValid(billing.city))
         return res.status(400).send({
           status: false,
           message: "Billing address: city is required or invalid",
