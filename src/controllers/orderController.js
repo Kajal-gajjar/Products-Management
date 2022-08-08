@@ -32,6 +32,14 @@ const createOrder = async function (req, res) {
         .status(404)
         .send({ status: false, message: "Cart is not found" });
 
+    if (cart.items.length == 0 || cart.totalPrice == 0 || cart.totalItems == 0)
+      return res
+        .status(400)
+        .send({
+          status: false,
+          message: "Cart is empty, order can't be placed",
+        });
+
     let totalQuantity = cart.items.reduce((acc, curr) => {
       acc += curr.quantity;
       return acc;
@@ -43,7 +51,7 @@ const createOrder = async function (req, res) {
           status: false,
           message: "Please enter Booleane value for cancellable",
         });
-      else cancellable = cancellable;
+      else cancellable = req.body.cancellable;
     } else cancellable = true;
 
     let order = {
@@ -52,7 +60,7 @@ const createOrder = async function (req, res) {
       totalPrice: cart.totalPrice,
       totalItems: cart.totalItems,
       totalQuantity: totalQuantity,
-      cancellable: cancellable,
+      cancellable: req.body.cancellable,
     };
 
     const placedOrder = await orderModel.create(order);
@@ -81,6 +89,12 @@ const createOrder = async function (req, res) {
 const updateOrder = async function (req, res) {
   try {
     userId = req.user._id;
+
+    if (!isValidRequest(req.body))
+      return res
+        .status(400)
+        .send({ status: false, message: "Invalid request" });
+
     let { orderId, status } = req.body;
 
     if (!orderId)

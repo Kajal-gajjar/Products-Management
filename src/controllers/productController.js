@@ -48,7 +48,10 @@ const createProduct = async function (req, res) {
         .status(409)
         .send({ status: false, message: `${title} is already exists!` });
     }
-    product.title = title;
+    product.title = title
+      .split(" ")
+      .filter((word) => word)
+      .join(" ");
 
     // description validation
     if (!description) {
@@ -61,7 +64,10 @@ const createProduct = async function (req, res) {
         .status(400)
         .send({ status: false, message: `Please input valid Description!` });
     }
-    product.description = description;
+    product.description = description
+      .split(" ")
+      .filter((word) => word)
+      .join(" ");
 
     // price validation
     if (!price) {
@@ -78,7 +84,14 @@ const createProduct = async function (req, res) {
     product.price = (Math.round(price * 100) / 100).toFixed(2);
 
     // validation for isFreeShipping
-    if (isFreeShipping) product.isFreeShipping = isFreeShipping;
+    if (isFreeShipping)
+      if (["true", "false"].includes(isFreeShipping))
+        product.isFreeShipping = isFreeShipping;
+      else
+        return res.status(400).send({
+          status: false,
+          message: "Value of isFreeShipping should be Boolean",
+        });
 
     // product image validation
     if (productImage && productImage.length == 0)
@@ -109,7 +122,7 @@ const createProduct = async function (req, res) {
         return res
           .status(400)
           .send({ status: false, message: "Please enter valid Installments" });
-      product.installments = installments;
+      product.installments = parseInt(installments);
     }
 
     // validation of availableSizes
@@ -156,6 +169,24 @@ const getProducts = async (req, res) => {
     let data = req.query;
     let filters = {};
 
+    let checkQueryParams = Object.keys(data);
+    let arr = [
+      "priceLessThan",
+      "priceGreaterThan",
+      "name",
+      "size",
+      "priceSort",
+    ];
+    for (let i = 0; i < checkQueryParams.length; i++) {
+      let update = arr.includes(checkQueryParams[i]);
+      if (!update)
+        return res.status(400).send({
+          status: false,
+          message:
+            "you can only provide values for priceLessThan, priceGreaterThan, name and size fields.",
+        });
+    }
+
     // size validation
     if (data.size != undefined) {
       let size = data.size.split(",");
@@ -196,6 +227,16 @@ const getProducts = async (req, res) => {
         return res.status(400).send({
           status: false,
           message: "Please enter valid Price range",
+        });
+      if (priceGreaterThan == priceLessThan)
+        return res.status(400).send({
+          status: false,
+          message: "PriceGreaterThan and priceLessThan can't be same",
+        });
+      if (Number(priceGreaterThan) > Number(priceLessThan))
+        return res.status(400).send({
+          status: false,
+          message: "PriceGreaterThan can't be greater than priceLessThan",
         });
       filters.price = { $gt: priceGreaterThan, $lt: priceLessThan };
     } else {
@@ -335,7 +376,10 @@ const updateProductbyId = async function (req, res) {
           status: false,
           message: `"${title}"-Title is already in use`,
         });
-      product.title = title;
+      product.title = title
+        .split(" ")
+        .filter((word) => word)
+        .join();
     }
 
     // description validation
@@ -392,7 +436,7 @@ const updateProductbyId = async function (req, res) {
         return res
           .status(400)
           .send({ status: false, message: "Please enter valid Installments" });
-      product.installments = installments;
+      product.installments = parseInt(installments);
     }
 
     let size = {};
@@ -436,7 +480,7 @@ const updateProductbyId = async function (req, res) {
         .send({ status: false, message: "Product is not found" });
 
     return res.status(200).send({
-      staus: true,
+      status: true,
       message: "Update product details is successful",
       data: updatedProduct,
     });

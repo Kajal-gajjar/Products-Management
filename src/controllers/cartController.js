@@ -16,13 +16,6 @@ const createCart = async function (req, res) {
 
     const { productId, quantity, cartId } = req.body;
 
-    if (cartId) {
-      if (!isValidObjectId(cartId))
-        return res
-          .status(400)
-          .send({ status: false, message: "Invalid CartId" });
-    }
-
     let finalCart = { items: [], totalItems: 0, totalPrice: 0 };
 
     const product = {};
@@ -68,8 +61,36 @@ const createCart = async function (req, res) {
       finalCart.totalPrice += product.quantity * findProduct.price;
 
       cart = await cartModel.create(finalCart);
+
+      cart = await cartModel.findOne({ userId: userIdFromPrams }).populate({
+        path: "items.productId",
+        select: {
+          _id: 1,
+          title: 1,
+          description: 1,
+          price: 1,
+          productImage: 1,
+          style: 1,
+        },
+      });
+
+      return res
+        .status(201)
+        .send({ status: true, message: "Success", data: cart });
     } else {
       let items = findCart.items;
+
+      if (cartId) {
+        if (!isValidObjectId(cartId))
+          return res
+            .status(400)
+            .send({ status: false, message: "Invalid CartId" });
+        else if (findCart._id != cartId)
+          return res.status(400).send({
+            status: false,
+            message: "Cart is not belong to mentioned userID",
+          });
+      }
 
       let productPresent = false;
       for (let i = 0; i < items.length; i++) {
@@ -87,26 +108,26 @@ const createCart = async function (req, res) {
 
       findCart.totalItems = findCart.items.length;
 
-      cart = await cartModel.findOneAndUpdate({ _id: findCart.id }, findCart, {
-        new: true,
-      });
+      cart = await cartModel
+        .findOneAndUpdate({ _id: findCart.id }, findCart, {
+          new: true,
+        })
+        .populate({
+          path: "items.productId",
+          select: {
+            _id: 1,
+            title: 1,
+            description: 1,
+            price: 1,
+            productImage: 1,
+            style: 1,
+          },
+        });
+
+      return res
+        .status(200)
+        .send({ status: true, message: "Success", data: cart });
     }
-
-    cart = await cartModel.findOne({ userId: userIdFromPrams }).populate({
-      path: "items.productId",
-      select: {
-        _id: 1,
-        title: 1,
-        description: 1,
-        price: 1,
-        productImage: 1,
-        style: 1,
-      },
-    });
-
-    return res
-      .status(201)
-      .send({ status: true, message: "Success", data: cart });
   } catch (error) {
     // console.log(error);
     res.status(500).send({ status: false, error: error.message });
